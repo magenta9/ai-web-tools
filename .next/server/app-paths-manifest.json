@@ -1,0 +1,8 @@
+{
+  "/image/page": "app/image/page.js",
+  "/page": "app/page.js",
+  "/json/page": "app/json/page.js",
+  "/jwt/page": "app/jwt/page.js",
+  "/diff/page": "app/diff/page.js",
+  "/timestamp/page": "app/timestamp/page.js"
+}

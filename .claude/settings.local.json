@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(curl:*)",
+      "Bash(bash:*)",
+      "Bash(bun add:*)",
+      "Bash(bun dev:*)",
+      "Bash(bun remove:*)",
+      "mcp__zai-mcp-server__ui_to_artifact"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
