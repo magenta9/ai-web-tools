@@ -18,13 +18,12 @@ import Layout from '../components/Layout'
 import { HistoryPanel } from '../components/HistoryPanel'
 import { useHistory } from '../hooks/useHistory'
 import { copyToClipboard, pasteFromClipboard, formatBytes } from '../utils'
+import { useToastContext } from '../providers/ToastProvider'
+import { useI18n } from '../providers/I18nProvider'
+import { CDN_URLS, IMAGE_PRESETS, STORAGE_KEYS, EXAMPLES } from '@/constants'
+import { getErrorMessage } from '@/types'
+import type { UrlItem, ImageTab } from '@/types'
 import '../tools.css'
-
-interface UrlItem {
-  label: string
-  url: string
-  icon: string
-}
 
 interface ImageHistoryItem {
   type: 'key_to_url' | 'url_to_key'
@@ -34,11 +33,13 @@ interface ImageHistoryItem {
 }
 
 export default function ImageConverter() {
-  const [activeTab, setActiveTab] = useState<'key-to-url' | 'url-to-key'>('key-to-url')
+  const [activeTab, setActiveTab] = useState<ImageTab>('key-to-url')
   const [keyInput, setKeyInput] = useState('')
   const [urlInput, setUrlInput] = useState('')
   const [urlOutput, setUrlOutput] = useState<UrlItem[]>([])
   const [keyOutput, setKeyOutput] = useState('')
+  const toast = useToastContext()
+  const { t } = useI18n()
   const {
     history,
     historyVisible,
@@ -47,7 +48,7 @@ export default function ImageConverter() {
     clearAllHistory,
     showHistory,
     hideHistory
-  } = useHistory<ImageHistoryItem>({ storageKey: 'image_history' })
+  } = useHistory<ImageHistoryItem>({ storageKey: STORAGE_KEYS.IMAGE_HISTORY })
 
   const addToHistory = (type: ImageHistoryItem['type'], input: string, output: string) => {
     saveToHistory({ type, input, output })
@@ -56,31 +57,28 @@ export default function ImageConverter() {
   const convertKeyToUrls = () => {
     const key = keyInput.trim()
     if (!key) {
-      alert('请输入 Image Key')
+      toast.warning(t.validation.required)
       return
     }
 
-    const baseCDN = 'https://cdn.lokboxes.ai/'
-    const frenchCDN = 'https://cdn.flippop.fun/'
-
     const urls: UrlItem[] = [
-      { label: 'Original CDN', url: baseCDN + key, icon: 'globe' },
-      { label: 'French CDN', url: frenchCDN + key, icon: 'flag' },
-      { label: 'Optimized (WebP, Quality 75)', url: baseCDN + 'cdn-cgi/image/quality=75,format=webp/' + key, icon: 'compress' },
-      { label: 'Optimized (Width 400, Quality 75)', url: baseCDN + 'cdn-cgi/image/width=400,quality=75/' + key, icon: 'expand-arrows-alt' },
-      { label: 'Optimized (Width 800, Quality 85)', url: baseCDN + 'cdn-cgi/image/width=800,quality=85/' + key, icon: 'tv' }
+      { label: t.image.originalCdn, url: CDN_URLS.BASE + key, icon: 'globe' },
+      { label: t.image.frenchCdn, url: CDN_URLS.FRENCH + key, icon: 'flag' },
+      { label: t.image.optimizedWebp, url: CDN_URLS.BASE + IMAGE_PRESETS.WEBP_QUALITY_75 + key, icon: 'compress' },
+      { label: t.image.optimizedWidth400, url: CDN_URLS.BASE + IMAGE_PRESETS.WIDTH_400_QUALITY_75 + key, icon: 'expand-arrows-alt' },
+      { label: t.image.optimizedWidth800, url: CDN_URLS.BASE + IMAGE_PRESETS.WIDTH_800_QUALITY_85 + key, icon: 'tv' }
     ]
 
     setUrlOutput(urls)
     const outputText = urls.map(u => u.url).join('\n')
     addToHistory('key_to_url', key, outputText)
-    alert('转换成功')
+    toast.success(t.image.convertSuccess)
   }
 
   const extractKeyFromUrl = () => {
     const url = urlInput.trim()
     if (!url) {
-      alert('请输入 URL')
+      toast.warning(t.validation.required)
       return
     }
 
@@ -107,30 +105,38 @@ export default function ImageConverter() {
       key = key.replace(/^cdn\.(lokboxes|flippop)\.(ai|fun)\//, '')
 
       if (!key.startsWith('flippop/image/')) {
-        throw new Error('无效的图像 URL 格式')
+        throw new Error(t.validation.invalidUrl)
       }
 
       setKeyOutput(key)
       addToHistory('url_to_key', url, key)
-      alert('提取成功')
+      toast.success(t.image.extractSuccess)
     } catch (error) {
-      alert('提取失败: ' + (error as Error).message)
+      toast.error(`${t.image.extractFailed}: ${getErrorMessage(error)}`)
     }
   }
 
   const handleCopy = async (text: string) => {
     const success = await copyToClipboard(text)
-    alert(success ? '已复制到剪贴板' : '复制失败')
+    if (success) {
+      toast.success(t.toast.copySuccess)
+    } else {
+      toast.error(t.toast.copyFailed)
+    }
   }
 
   const copyAllUrls = async () => {
     if (urlOutput.length === 0) {
-      alert('没有可复制的内容')
+      toast.warning(t.validation.required)
       return
     }
 
     const success = await copyToClipboard(urlOutput.map(u => u.url).join('\n'))
-    alert(success ? '已复制所有 URLs' : '复制失败')
+    if (success) {
+      toast.success(t.toast.copySuccess)
+    } else {
+      toast.error(t.toast.copyFailed)
+    }
   }
 
   const handlePaste = async (type: 'key' | 'url') => {
@@ -141,21 +147,17 @@ export default function ImageConverter() {
       } else {
         setUrlInput(text)
       }
-      alert('已粘贴')
+      toast.success(t.toast.pasteSuccess)
     } else {
-      alert('无法读取剪贴板')
+      toast.error(t.toast.pasteFailed)
     }
   }
 
   const loadExample = (type: 'key' | 'url') => {
     if (type === 'key') {
-      const exampleKey = 'flippop/image/item/story/1996218524934668288/202512040537/6b3b2b76167b42c6a7ecfbb480e78219.jpeg'
-      setKeyInput(exampleKey)
-      setTimeout(() => convertKeyToUrls(), 100)
+      setKeyInput(EXAMPLES.IMAGE_KEY)
     } else {
-      const exampleUrl = 'https://cdn.lokboxes.ai/cdn-cgi/image/quality=75,format=webp/flippop/image/item/story/1996218524934668288/202512040537/6b3b2b76167b42c6a7ecfbb480e78219.jpeg'
-      setUrlInput(exampleUrl)
-      setTimeout(() => extractKeyFromUrl(), 100)
+      setUrlInput(EXAMPLES.IMAGE_URL)
     }
   }
 

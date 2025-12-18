@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useCallback, useEffect } from 'react'
+import { MAX_HISTORY_ITEMS } from '@/constants'
 
 export interface BaseHistoryItem {
     type: string
@@ -9,26 +10,68 @@ export interface BaseHistoryItem {
     timestamp: number
 }
 
-export interface UseHistoryOptions<T extends BaseHistoryItem> {
+export interface UseHistoryOptions {
     storageKey: string
     maxItems?: number
 }
 
-export function useHistory<T extends BaseHistoryItem>(options: UseHistoryOptions<T>) {
-    const { storageKey, maxItems = 100 } = options
+function isBaseHistoryItem(item: unknown): item is BaseHistoryItem {
+    return (
+        typeof item === 'object' &&
+        item !== null &&
+        'type' in item &&
+        typeof (item as BaseHistoryItem).type === 'string' &&
+        'input' in item &&
+        typeof (item as BaseHistoryItem).input === 'string' &&
+        'output' in item &&
+        typeof (item as BaseHistoryItem).output === 'string' &&
+        'timestamp' in item &&
+        typeof (item as BaseHistoryItem).timestamp === 'number'
+    )
+}
+
+function isHistoryArray(data: unknown): data is BaseHistoryItem[] {
+    return Array.isArray(data) && data.every(isBaseHistoryItem)
+}
+
+function safeGetFromStorage<T extends BaseHistoryItem>(key: string): T[] {
+    if (typeof window === 'undefined') return []
+
+    try {
+        const stored = localStorage.getItem(key)
+        if (!stored) return []
+
+        const parsed: unknown = JSON.parse(stored)
+        if (isHistoryArray(parsed)) {
+            return parsed as T[]
+        }
+
+        console.warn(`Invalid history data format for key: ${key}`)
+        return []
+    } catch (error) {
+        console.error(`Failed to parse history for key ${key}:`, error)
+        return []
+    }
+}
+
+function safeSetToStorage<T extends BaseHistoryItem>(key: string, data: T[]): void {
+    if (typeof window === 'undefined') return
+
+    try {
+        localStorage.setItem(key, JSON.stringify(data))
+    } catch (error) {
+        console.error(`Failed to save history for key ${key}:`, error)
+    }
+}
+
+export function useHistory<T extends BaseHistoryItem>(options: UseHistoryOptions) {
+    const { storageKey, maxItems = MAX_HISTORY_ITEMS } = options
     const [history, setHistory] = useState<T[]>([])
     const [historyVisible, setHistoryVisible] = useState(false)
 
     const loadHistory = useCallback(() => {
-        if (typeof window === 'undefined') return
-        const savedHistory = localStorage.getItem(storageKey)
-        if (savedHistory) {
-            try {
-                setHistory(JSON.parse(savedHistory))
-            } catch (e) {
-                console.error('Failed to parse history:', e)
-            }
-        }
+        const savedHistory = safeGetFromStorage<T>(storageKey)
+        setHistory(savedHistory)
     }, [storageKey])
 
     useEffect(() => {
@@ -43,7 +86,7 @@ export function useHistory<T extends BaseHistoryItem>(options: UseHistoryOptions
 
         setHistory(prev => {
             const updatedHistory = [newItem, ...prev].slice(0, maxItems)
-            localStorage.setItem(storageKey, JSON.stringify(updatedHistory))
+            safeSetToStorage(storageKey, updatedHistory)
             return updatedHistory
         })
     }, [storageKey, maxItems])
@@ -51,14 +94,16 @@ export function useHistory<T extends BaseHistoryItem>(options: UseHistoryOptions
     const deleteHistoryItem = useCallback((index: number) => {
         setHistory(prev => {
             const updatedHistory = prev.filter((_, i) => i !== index)
-            localStorage.setItem(storageKey, JSON.stringify(updatedHistory))
+            safeSetToStorage(storageKey, updatedHistory)
             return updatedHistory
         })
     }, [storageKey])
 
     const clearAllHistory = useCallback(() => {
         setHistory([])
-        localStorage.removeItem(storageKey)
+        if (typeof window !== 'undefined') {
+            localStorage.removeItem(storageKey)
+        }
     }, [storageKey])
 
     const showHistory = useCallback(() => setHistoryVisible(true), [])

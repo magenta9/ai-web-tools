@@ -8,7 +8,12 @@
       "Bash(bun remove:*)",
       "mcp__zai-mcp-server__ui_to_artifact",
       "Bash(git commit:*)",
-      "Bash(wc:*)"
+      "Bash(wc:*)",
+      "Bash(git push:*)",
+      "Bash(git -C /Users/zhangcheng/code/ai/web-tools-worktree add bun.lock)",
+      "Bash(git -C /Users/zhangcheng/code/ai/web-tools-worktree commit -m \"Update lockfile after dependency changes\")",
+      "Bash(gh pr create:*)",
+      "Bash(git add:*)"
     ],
     "deny": [],
     "ask": []

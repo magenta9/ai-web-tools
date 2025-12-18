@@ -15,6 +15,11 @@ import Layout from '../components/Layout'
 import { HistoryPanel } from '../components/HistoryPanel'
 import { useHistory } from '../hooks/useHistory'
 import { copyToClipboard, pasteFromClipboard } from '../utils'
+import { useToastContext } from '../providers/ToastProvider'
+import { useI18n } from '../providers/I18nProvider'
+import { STORAGE_KEYS, TIMEZONE_OFFSETS, TIME_MS } from '@/constants'
+import { getErrorMessage } from '@/types'
+import type { ConversionResult } from '@/types'
 import '../tools.css'
 
 interface TimestampHistoryItem {
@@ -27,7 +32,9 @@ interface TimestampHistoryItem {
 export default function TimestampConverter() {
   const [timestamp, setTimestamp] = useState('')
   const [date, setDate] = useState('')
-  const [results, setResults] = useState<any[]>([])
+  const [results, setResults] = useState<ConversionResult[]>([])
+  const toast = useToastContext()
+  const { t } = useI18n()
   const {
     history,
     historyVisible,
@@ -36,7 +43,7 @@ export default function TimestampConverter() {
     clearAllHistory,
     showHistory,
     hideHistory
-  } = useHistory<TimestampHistoryItem>({ storageKey: 'timestamp_history' })
+  } = useHistory<TimestampHistoryItem>({ storageKey: STORAGE_KEYS.TIMESTAMP_HISTORY })
 
   const addToHistory = (type: TimestampHistoryItem['type'], input: string, output: string) => {
     saveToHistory({ type, input, output })
@@ -45,76 +52,77 @@ export default function TimestampConverter() {
   const convertTimestampToDate = () => {
     const ts = timestamp.trim()
     if (!ts) {
-      alert('请输入时间戳')
+      toast.warning(t.validation.required)
       return
     }
 
     try {
       const num = parseInt(ts)
       if (isNaN(num)) {
-        throw new Error('无效的时间戳')
+        throw new Error(t.validation.invalidTimestamp)
       }
 
       const dateObj = new Date(num)
       if (isNaN(dateObj.getTime())) {
-        throw new Error('无效的时间戳')
+        throw new Error(t.validation.invalidTimestamp)
       }
 
-      const conversions = [
+      const conversions: ConversionResult[] = [
         {
-          label: 'UTC 时间',
+          label: t.timestamp.utcTime,
           value: dateObj.toUTCString()
         },
         {
-          label: '本地时间',
+          label: t.timestamp.localTime,
           value: dateObj.toLocaleString()
         },
         {
-          label: 'ISO 8601',
+          label: t.timestamp.iso8601,
           value: dateObj.toISOString()
         },
         {
-          label: '日期 (YYYY-MM-DD)',
+          label: t.timestamp.dateFormat,
           value: dateObj.toISOString().split('T')[0]
         },
         {
-          label: '时间 (HH:MM:SS)',
+          label: t.timestamp.timeFormat,
           value: dateObj.toTimeString().split(' ')[0]
         },
         {
-          label: '中国时区 (UTC+8)',
-          value: new Date(num + 8 * 60 * 60 * 1000).toLocaleString('zh-CN')
+          label: t.timestamp.chinaTimezone,
+          value: new Date(num + TIMEZONE_OFFSETS.CHINA * TIME_MS.HOUR).toLocaleString('zh-CN')
         }
       ]
 
       setResults(conversions)
       const output = conversions.map(c => `${c.label}: ${c.value}`).join('\n')
       addToHistory('timestamp_to_date', ts, output)
+      toast.success(t.toast.operationSuccess)
     } catch (err) {
-      alert((err as Error).message)
+      toast.error(getErrorMessage(err))
     }
   }
 
   const convertDateToTimestamp = () => {
     const dateStr = date.trim()
     if (!dateStr) {
-      alert('请输入日期')
+      toast.warning(t.validation.required)
       return
     }
 
     try {
       const dateObj = new Date(dateStr)
       if (isNaN(dateObj.getTime())) {
-        throw new Error('无效的日期格式')
+        throw new Error(t.validation.invalidDate)
       }
 
-      const conversions = [
+      const conversions: ConversionResult[] = [
         {
-          label: 'Unix 时间戳 (秒)',
-          value: Math.floor(dateObj.getTime() / 1000)
+          label: t.timestamp.unixSeconds,
+          value: Math.floor(dateObj.getTime() / TIME_MS.SECOND)
         },
         {
-          label: 'Unix 时间戳 (毫秒)',
+          label: t.timestamp.unixMilliseconds,
           value: dateObj.getTime()
         }
       ]
@@ -122,8 +130,9 @@ export default function TimestampConverter() {
       setResults(conversions)
       const output = conversions.map(c => `${c.label}: ${c.value}`).join('\n')
       addToHistory('date_to_timestamp', dateStr, output)
+      toast.success(t.toast.operationSuccess)
     } catch (err) {
-      alert((err as Error).message)
+      toast.error(getErrorMessage(err))
     }
   }
 
@@ -139,7 +148,11 @@ export default function TimestampConverter() {
 
   const handleCopy = async (text: string) => {
     const success = await copyToClipboard(text)
-    alert(success ? '已复制到剪贴板' : '复制失败')
+    if (success) {
+      toast.success(t.toast.copySuccess)
+    } else {
+      toast.error(t.toast.copyFailed)
+    }
   }
 
   const handlePaste = async (type: 'timestamp' | 'date') => {
@@ -150,9 +163,9 @@ export default function TimestampConverter() {
       } else {
         setDate(text)
       }
-      alert('已粘贴')
+      toast.success(t.toast.pasteSuccess)
     } else {
-      alert('无法读取剪贴板')
+      toast.error(t.toast.pasteFailed)
     }
   }
 
@@ -169,7 +182,7 @@ export default function TimestampConverter() {
         setTimestamp(firstResult.toString())
         setDate('')
       } else {
-        setDate(firstResult)
+        setDate(firstResult.toString())
         setTimestamp('')
       }
     }

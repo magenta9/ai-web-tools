@@ -1,6 +1,6 @@
 'use client'
 
-import React from 'react'
+import React, { useState, useEffect, useCallback, useRef } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {
     faHistory,
@@ -12,6 +12,9 @@ import {
 } from '@fortawesome/free-solid-svg-icons'
 import { formatTimestamp } from '../utils/format'
 import { BaseHistoryItem } from '../hooks/useHistory'
+import { ConfirmDialog } from './ui/ConfirmDialog'
+import { useToastContext } from '../providers/ToastProvider'
+import { useI18n } from '../providers/I18nProvider'
 
 export interface HistoryPanelProps<T extends BaseHistoryItem> {
     visible: boolean
@@ -38,25 +41,59 @@ export function HistoryPanel<T extends BaseHistoryItem>({
     renderItemPreview,
     renderItemActions
 }: HistoryPanelProps<T>) {
+    const toast = useToastContext()
+    const { t } = useI18n()
+    const [confirmState, setConfirmState] = useState<{
+        isOpen: boolean
+        type: 'clearAll' | 'delete'
+        deleteIndex?: number
+    }>({ isOpen: false, type: 'clearAll' })
+    const panelRef = useRef<HTMLDivElement>(null)
+
+    const handleKeyDown = useCallback((e: KeyboardEvent) => {
+        if (e.key === 'Escape') {
+            onClose()
+        }
+    }, [onClose])
+
+    useEffect(() => {
+        if (visible) {
+            document.addEventListener('keydown', handleKeyDown)
+            panelRef.current?.focus()
+        }
+        return () => {
+            document.removeEventListener('keydown', handleKeyDown)
+        }
+    }, [visible, handleKeyDown])
+
     if (!visible) return null
 
     const handleClearAll = () => {
-        if (window.confirm('确定要清空所有历史记录吗？此操作不可恢复！')) {
-            onClearAll()
-            alert('已清空所有历史记录')
-        }
+        setConfirmState({ isOpen: true, type: 'clearAll' })
     }
 
     const handleDelete = (index: number) => {
-        if (window.confirm('确定要删除这条历史记录吗？')) {
-            onDelete(index)
-            alert('已删除历史记录')
+        setConfirmState({ isOpen: true, type: 'delete', deleteIndex: index })
+    }
+
+    const handleConfirm = () => {
+        if (confirmState.type === 'clearAll') {
+            onClearAll()
+            toast.success(t.history.cleared)
+        } else if (confirmState.type === 'delete' && confirmState.deleteIndex !== undefined) {
+            onDelete(confirmState.deleteIndex)
+            toast.success(t.history.deleted)
         }
+        setConfirmState({ isOpen: false, type: 'clearAll' })
+    }
+
+    const handleCancel = () => {
+        setConfirmState({ isOpen: false, type: 'clearAll' })
     }
 
     const handleLoad = (item: T) => {
         onLoad(item)
-        alert('已加载历史记录')
+        toast.success(t.history.loaded)
     }
 
     return (
@@ -146,6 +183,17 @@ export function HistoryPanel<T extends BaseHistoryItem>({
                     )}
                 </div>
             </div>
+
+            <ConfirmDialog
+                isOpen={confirmState.isOpen}
+                title={confirmState.type === 'clearAll' ? t.history.clearAll : t.common.delete}
+                message={confirmState.type === 'clearAll' ? t.history.clearConfirm : t.history.deleteConfirm}
+                confirmText={t.common.confirm}
+                cancelText={t.common.cancel}
+                onConfirm={handleConfirm}
+                onCancel={handleCancel}
+                variant="danger"
+            />
         </div>
     )
 }

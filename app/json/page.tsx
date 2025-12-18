@@ -23,7 +23,12 @@ import {
 import Layout from '../components/Layout'
 import { HistoryPanel } from '../components/HistoryPanel'
 import { useHistory } from '../hooks/useHistory'
-import { copyToClipboard, pasteFromClipboard, formatBytes, formatTimestamp } from '../utils'
+import { copyToClipboard, pasteFromClipboard, formatBytes } from '../utils'
+import { useToastContext } from '../providers/ToastProvider'
+import { useI18n } from '../providers/I18nProvider'
+import { DEBOUNCE_DELAY, STORAGE_KEYS } from '@/constants'
+import { getErrorMessage } from '@/types'
+import type { JsonValue, JsonObject, ValidationStatus } from '@/types'
 import '../tools.css'
 
 interface JsonHistoryItem {
@@ -34,12 +39,30 @@ interface JsonHistoryItem {
   mode: string
 }
 
+function sortObjectKeys(obj: JsonValue): JsonValue {
+  if (Array.isArray(obj)) {
+    return obj.map(sortObjectKeys)
+  }
+  if (obj !== null && typeof obj === 'object') {
+    const sorted: JsonObject = {}
+    Object.keys(obj as JsonObject)
+      .sort()
+      .forEach((key) => {
+        sorted[key] = sortObjectKeys((obj as JsonObject)[key])
+      })
+    return sorted
+  }
+  return obj
+}
+
 export default function JsonTool() {
   const [input, setInput] = useState('')
   const [output, setOutput] = useState('')
   const [indent, setIndent] = useState(2)
   const [sortKeys, setSortKeys] = useState(true)
   const [liveMode, setLiveMode] = useState(false)
+  const toast = useToastContext()
+  const { t } = useI18n()
   const {
     history,
     historyVisible,
@@ -48,8 +71,8 @@ export default function JsonTool() {
     clearAllHistory,
     showHistory,
     hideHistory
-  } = useHistory<JsonHistoryItem>({ storageKey: 'json_history' })
-  const [validationStatus, setValidationStatus] = useState<'valid' | 'invalid' | 'empty'>('empty')
+  } = useHistory<JsonHistoryItem>({ storageKey: STORAGE_KEYS.JSON_HISTORY })
+  const [validationStatus, setValidationStatus] = useState<ValidationStatus>('empty')
   const [error, setError] = useState('')
   const [stats, setStats] = useState({ input: 0, output: 0 })
 
@@ -89,25 +112,10 @@ export default function JsonTool() {
     }
   }, [input])
 
-  const sortObjectKeys = useCallback((obj: any): any => {
-    if (Array.isArray(obj)) {
-      return obj.map(sortObjectKeys)
-    }
-    if (obj !== null && typeof obj === 'object') {
-      return Object.keys(obj)
-        .sort()
-        .reduce((sorted: any, key) => {
-          sorted[key] = sortObjectKeys(obj[key])
-          return sorted
-        }, {})
-    }
-    return obj
-  }, [])
-
   const processJSON = useCallback((mode: string, silent = false) => {
     const raw = input.trim()
     if (!raw) {
-      if (!silent) alert('请输入内容')
+      if (!silent) toast.warning(t.validation.required)
       return
     }
 
@@ -122,15 +130,15 @@ export default function JsonTool() {
           if (typeof result !== 'string') {
             result = JSON.stringify(result, null, indent)
           }
-        } catch (e) {
+        } catch {
           result = raw.replace(/\\"/g, '"').replace(/\\\\/g, '\\')
         }
       } else {
-        let obj
+        let obj: JsonValue
         try {
-          obj = JSON.parse(raw)
+          obj = JSON.parse(raw) as JsonValue
         } catch (e) {
-          throw new Error('无效的 JSON 数据: ' + (e as Error).message)
+          throw new Error(`${t.validation.invalidJson}: ${getErrorMessage(e)}`)
         }
 
         if (mode === 'format') {
@@ -144,24 +152,27 @@ export default function JsonTool() {
       }
 
       setOutput(result)
-      const operation = mode === 'format' ? '格式化' : (mode === 'minify' ? '压缩' : mode)
+      const operationMap: Record<string, string> = {
+        format: t.json.formatSuccess,
+        minify: t.json.minifySuccess,
+      }
       if (!silent) {
-        alert(`${operation}成功`)
+        toast.success(operationMap[mode] || t.toast.operationSuccess)
         addToHistory(mode, raw, result)
       }
     } catch (err) {
-      const errorMsg = (err as Error).message
+      const errorMsg = getErrorMessage(err)
       setError(errorMsg)
       if (!silent) {
-        alert(`处理失败: ${errorMsg}`)
+        toast.error(`${t.json.processingFailed}: ${errorMsg}`)
       }
     }
-  }, [input, indent, sortKeys, addToHistory, sortObjectKeys])
+  }, [input, indent, sortKeys, addToHistory, toast, t])
 
   const fixJSON = () => {
     const raw = input.trim()
     if (!raw) {
-      alert('请输入内容')
+      toast.warning(t.validation.required)
       return
     }
 
@@ -184,25 +195,29 @@ export default function JsonTool() {
 
       setOutput(result)
       setInput(fixed)
-      alert('JSON 修复成功')
+      toast.success(t.json.fixSuccess)
       addToHistory('fix', raw, result)
-    } catch (err) {
-      alert('无法自动修复 JSON')
+    } catch {
+      toast.error(t.json.fixFailed)
     }
   }
 
   const handleCopy = async (text: string) => {
     const success = await copyToClipboard(text)
-    alert(success ? '已复制到剪贴板' : '复制失败')
+    if (success) {
+      toast.success(t.toast.copySuccess)
+    } else {
+      toast.error(t.toast.copyFailed)
+    }
   }
 
   const handlePaste = async () => {
     const text = await pasteFromClipboard()
     if (text !== null) {
       setInput(text)
-      alert('已粘贴')
+      toast.success(t.toast.pasteSuccess)
     } else {
-      alert('无法读取剪贴板')
+      toast.error(t.toast.pasteFailed)
     }
   }
 

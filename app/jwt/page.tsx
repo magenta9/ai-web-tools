@@ -17,6 +17,10 @@ import Layout from '../components/Layout'
 import { HistoryPanel } from '../components/HistoryPanel'
 import { useHistory } from '../hooks/useHistory'
 import { copyToClipboard, pasteFromClipboard } from '../utils'
+import { useToastContext } from '../providers/ToastProvider'
+import { useI18n } from '../providers/I18nProvider'
+import { STORAGE_KEYS, JWT_DEFAULTS, EXAMPLES } from '@/constants'
+import { getErrorMessage } from '@/types'
 import '../tools.css'
 
 interface JwtHistoryItem {
@@ -31,9 +35,11 @@ export default function JwtTool() {
   const [header, setHeader] = useState('')
   const [payload, setPayload] = useState('')
   const [signature, setSignature] = useState('')
-  const [secret, setSecret] = useState('your-secret-key')
+  const [secret, setSecret] = useState<string>(JWT_DEFAULTS.SECRET)
   const [encodedJwt, setEncodedJwt] = useState('')
   const [showSecret, setShowSecret] = useState(false)
+  const toast = useToastContext()
+  const { t } = useI18n()
   const {
     history,
     historyVisible,
@@ -42,7 +48,7 @@ export default function JwtTool() {
     clearAllHistory,
     showHistory,
     hideHistory
-  } = useHistory<JwtHistoryItem>({ storageKey: 'jwt_history' })
+  } = useHistory<JwtHistoryItem>({ storageKey: STORAGE_KEYS.JWT_HISTORY })
 
   const addToHistory = (type: JwtHistoryItem['type'], input: string, output: string) => {
     saveToHistory({ type, input, output })
@@ -51,14 +57,14 @@ export default function JwtTool() {
   const decodeJWT = () => {
     const jwt = jwtInput.trim()
     if (!jwt) {
-      alert('请输入 JWT Token')
+      toast.warning(t.jwt.tokenRequired)
       return
     }
 
     try {
       const parts = jwt.split('.')
       if (parts.length !== 3) {
-        throw new Error('无效的 JWT 格式')
+        throw new Error(t.validation.invalidJwt)
       }
 
       const decodedHeader = JSON.parse(atob(parts[0]))
@@ -69,20 +75,20 @@ export default function JwtTool() {
       setSignature(parts[2])
 
       addToHistory('decode', jwt, JSON.stringify({ header: decodedHeader, payload: decodedPayload }, null, 2))
-      alert('JWT 解码成功')
+      toast.success(t.jwt.decodeSuccess)
     } catch (err) {
-      alert('JWT 解码失败: ' + (err as Error).message)
+      toast.error(`${t.jwt.decodeFailed}: ${getErrorMessage(err)}`)
     }
   }
 
   const encodeJWT = async () => {
     if (!header || !payload) {
-      alert('请输入 Header 和 Payload')
+      toast.warning(t.jwt.inputRequired)
       return
     }
 
     if (!secret) {
-      alert('请输入密钥')
+      toast.warning(t.jwt.secretRequired)
       return
     }
 
@@ -98,15 +104,19 @@ export default function JwtTool() {
 
       setEncodedJwt(jwt)
       addToHistory('encode', JSON.stringify({ header: parsedHeader, payload: parsedPayload }), jwt)
-      alert('JWT 编码成功')
+      toast.success(t.jwt.encodeSuccess)
     } catch (err) {
-      alert('JWT 编码失败: ' + (err as Error).message)
+      toast.error(`${t.jwt.encodeFailed}: ${getErrorMessage(err)}`)
     }
   }
 
   const handleCopy = async (text: string) => {
     const success = await copyToClipboard(text)
-    alert(success ? '已复制到剪贴板' : '复制失败')
+    if (success) {
+      toast.success(t.toast.copySuccess)
+    } else {
+      toast.error(t.toast.copyFailed)
+    }
   }
 
   const handlePaste = async (type: 'jwt' | 'header' | 'payload') => {
@@ -119,9 +129,9 @@ export default function JwtTool() {
       } else {
         setPayload(text)
       }
-      alert('已粘贴')
+      toast.success(t.toast.pasteSuccess)
     } else {
-      alert('无法读取剪贴板')
+      toast.error(t.toast.pasteFailed)
     }
   }
 

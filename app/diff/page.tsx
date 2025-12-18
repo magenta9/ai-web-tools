@@ -4,7 +4,6 @@ import React, { useState } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {
   faMinusCircle,
-  faPlusCircle,
   faPaste,
   faCode,
   faTrash,
@@ -16,38 +15,38 @@ import {
   faDownload
 } from '@fortawesome/free-solid-svg-icons'
 import Layout from '../components/Layout'
+import { useToastContext } from '../providers/ToastProvider'
+import { useI18n } from '../providers/I18nProvider'
+import { pasteFromClipboard, copyToClipboard } from '../utils'
+import { EXAMPLES } from '@/constants'
+import type { DiffLine, DiffStats, JsonObject } from '@/types'
 import '../tools.css'
-
-interface DiffLine {
-  type: 'added' | 'removed' | 'modified' | 'unchanged'
-  key: string
-  oldValue?: string
-  newValue?: string
-}
 
 export default function JsonDiff() {
   const [oldJson, setOldJson] = useState('')
   const [newJson, setNewJson] = useState('')
   const [diffOutput, setDiffOutput] = useState<DiffLine[]>([])
-  const [stats, setStats] = useState({ added: 0, removed: 0 })
+  const [stats, setStats] = useState<DiffStats>({ added: 0, removed: 0 })
+  const toast = useToastContext()
+  const { t } = useI18n()
 
   const pasteOldJSON = async () => {
-    try {
-      const text = await navigator.clipboard.readText()
+    const text = await pasteFromClipboard()
+    if (text !== null) {
       setOldJson(text)
-      alert('已粘贴')
-    } catch (err) {
-      alert('无法读取剪贴板')
+      toast.success(t.toast.pasteSuccess)
+    } else {
+      toast.error(t.toast.pasteFailed)
     }
   }
 
   const pasteNewJSON = async () => {
-    try {
-      const text = await navigator.clipboard.readText()
+    const text = await pasteFromClipboard()
+    if (text !== null) {
       setNewJson(text)
-      alert('已粘贴')
-    } catch (err) {
-      alert('无法读取剪贴板')
+      toast.success(t.toast.pasteSuccess)
+    } else {
+      toast.error(t.toast.pasteFailed)
     }
   }
 
@@ -64,33 +63,22 @@ export default function JsonDiff() {
   }
 
   const loadOldExample = () => {
-    setOldJson(JSON.stringify({
-      "name": "John",
-      "age": 30,
-      "city": "New York",
-      "hobbies": ["reading", "swimming"]
-    }, null, 2))
+    setOldJson(JSON.stringify(EXAMPLES.JSON_OLD, null, 2))
   }
 
   const loadNewExample = () => {
-    setNewJson(JSON.stringify({
-      "name": "John",
-      "age": 31,
-      "city": "Los Angeles",
-      "hobbies": ["reading", "coding"],
-      "job": "Developer"
-    }, null, 2))
+    setNewJson(JSON.stringify(EXAMPLES.JSON_NEW, null, 2))
   }
 
   const compareJSON = () => {
     if (!oldJson || !newJson) {
-      alert('请输入两个 JSON 对象')
+      toast.warning(t.diff.inputRequired)
       return
     }
 
     try {
-      const oldObj = JSON.parse(oldJson)
-      const newObj = JSON.parse(newJson)
+      const oldObj = JSON.parse(oldJson) as JsonObject
+      const newObj = JSON.parse(newJson) as JsonObject
 
       const diff = generateDiff(oldObj, newObj)
       const addedCount = countAdded(oldObj, newObj)
@@ -98,13 +86,13 @@ export default function JsonDiff() {
 
       setDiffOutput(diff)
       setStats({ added: addedCount, removed: removedCount })
-      alert('对比完成')
-    } catch (err) {
-      alert('JSON 格式错误')
+      toast.success(t.diff.compareSuccess)
+    } catch {
+      toast.error(t.diff.formatError)
     }
   }
 
-  const generateDiff = (oldObj: any, newObj: any): DiffLine[] => {
+  const generateDiff = (oldObj: JsonObject, newObj: JsonObject): DiffLine[] => {
     const diff: DiffLine[] = []
 
     // Find removed properties
@@ -139,7 +127,7 @@ export default function JsonDiff() {
     return diff
   }
 
-  const countAdded = (oldObj: any, newObj: any): number => {
+  const countAdded = (oldObj: JsonObject, newObj: JsonObject): number => {
     let count = 0
     const addedKeys = Object.keys(newObj).filter(key => !(key in oldObj))
     count += addedKeys.length
@@ -154,7 +142,7 @@ export default function JsonDiff() {
     return count
   }
 
-  const countRemoved = (oldObj: any, newObj: any): number => {
+  const countRemoved = (oldObj: JsonObject, newObj: JsonObject): number => {
     let count = 0
     const removedKeys = Object.keys(oldObj).filter(key => !(key in newObj))
     count += removedKeys.length
@@ -171,7 +159,7 @@ export default function JsonDiff() {
 
   const diffToText = (): string => {
     return diffOutput.map(line => {
-      if (line.type === 'unchanged') return '两个 JSON 对象完全相同'
+      if (line.type === 'unchanged') return t.diff.identical
       if (line.type === 'added') return `+ ${line.key}: ${line.newValue}`
       if (line.type === 'removed') return `- ${line.key}: ${line.oldValue}`
       return `~ ${line.key}:\n  - ${line.oldValue}\n  + ${line.newValue}`
@@ -180,11 +168,11 @@ export default function JsonDiff() {
 
   const copyDiff = async () => {
     if (diffOutput.length === 0) return
-    try {
-      await navigator.clipboard.writeText(diffToText())
-      alert('已复制差异结果')
-    } catch (err) {
-      alert('复制失败')
+    const success = await copyToClipboard(diffToText())
+    if (success) {
+      toast.success(t.toast.copySuccess)
+    } else {
+      toast.error(t.toast.copyFailed)
     }
   }
 
