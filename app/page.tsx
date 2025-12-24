@@ -6,7 +6,8 @@ import {
   GitCompare,
   Clock,
   Key,
-  Database
+  Database,
+  FileJson
 } from 'lucide-react'
 
 const tools = [
@@ -15,6 +16,12 @@ const tools = [
     title: 'JSON Tool',
     description: 'Format, validate, minify, and analyze JSON data',
     icon: Code
+  },
+  {
+    href: '/fixjson',
+    title: 'AI JSON Fix',
+    description: 'Fix non-standard JSON data with AI',
+    icon: FileJson
   },
   {
     href: '/image',
