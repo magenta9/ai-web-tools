@@ -21,6 +21,7 @@ const navItems = [
   { href: '/diff', label: 'Diff', Icon: GitCompare },
   { href: '/timestamp', label: 'Timestamp', Icon: Clock },
   { href: '/jwt', label: 'JWT', Icon: Key },
+  { href: '/aisql', label: 'AI SQL', Icon: Database },
 ]
 
 const Header = memo(function Header() {

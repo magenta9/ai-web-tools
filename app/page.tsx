@@ -39,6 +39,12 @@ const tools = [
     title: 'JWT Tool',
     description: 'Encode and decode JWT tokens',
     icon: Key
+  },
+  {
+    href: '/aisql',
+    title: 'AI SQL',
+    description: 'Natural language to SQL with AI',
+    icon: Database
   }
 ]
 

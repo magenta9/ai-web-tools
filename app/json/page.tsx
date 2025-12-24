@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react'
 import {
   ArrowRight,
+  Indent,
   Minimize2,
   Quote,
   Wand2,
@@ -348,7 +349,7 @@ export default function JsonTool() {
                 </div>
                 <div className="panel-actions">
                   <button className="panel-btn format-btn" onClick={() => processJSON('format')}>
-                    <ArrowRight size={14} /> FORMAT
+                    <Indent size={14} /> FORMAT
                   </button>
                   <button className="panel-btn minify-btn" onClick={() => processJSON('minify')}>
                     <Minimize2 size={14} /> MINIFY

@@ -13,7 +13,9 @@
       "Bash(git -C /Users/zhangcheng/code/ai/web-tools-worktree add bun.lock)",
       "Bash(git -C /Users/zhangcheng/code/ai/web-tools-worktree commit -m \"Update lockfile after dependency changes\")",
       "Bash(gh pr create:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(mkdir:*)",
+      "mcp__web-search-prime__webSearchPrime"
     ],
     "deny": [],
     "ask": []
