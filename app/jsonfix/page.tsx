@@ -15,18 +15,16 @@ import {
 } from 'lucide-react'
 import Layout from '../components/Layout'
 import { HistoryPanel } from '../components/HistoryPanel'
-import { useHistory } from '../hooks/useHistory'
-import { copyToClipboard, pasteFromClipboard, formatBytes } from '../utils'
+import { Panel } from '../components/Panel'
+import { ModelSelector } from '../components/ModelSelector'
+import { LoadingButton } from '../components/LoadingButton'
+import { ActionButtons } from '../components/ActionButtons'
+import { useHistory, useOllamaModels, useClipboard, useLiveMode } from '../hooks'
+import { formatBytes } from '../utils'
 import { useToastContext } from '../providers/ToastProvider'
 import { useI18n } from '../providers/I18nProvider'
 import { DEBOUNCE_DELAY, STORAGE_KEYS } from '@/constants'
 import '../tools.css'
-
-interface OllamaModel {
-  name: string
-  size: number
-  modified_at: string
-}
 
 const API_BASE = 'http://localhost:3001/api'
 
@@ -249,8 +247,14 @@ export default function JsonFixTool() {
   const [input, setInput] = useState('')
   const [output, setOutput] = useState('')
   const [indent, setIndent] = useState(2)
+  const [liveMode, setLiveMode] = useState(false)
+  const [error, setError] = useState('')
+  const [isGenerating, setIsGenerating] = useState(false)
+
   const toast = useToastContext()
   const { t } = useI18n()
+  const { models, selectedModel, setSelectedModel } = useOllamaModels()
+  const { copyWithToast, pasteWithToast } = useClipboard()
   const {
     history,
     historyVisible,
@@ -260,13 +264,6 @@ export default function JsonFixTool() {
     showHistory,
     hideHistory
   } = useHistory<JsonFixHistoryItem>({ storageKey: STORAGE_KEYS.JSONFIX_HISTORY, toolName: 'jsonfix' })
-  const [error, setError] = useState('')
-  const liveTimeoutRef = useRef<NodeJS.Timeout | null>(null)
-
-  // Ollama models state
-  const [models, setModels] = useState<OllamaModel[]>([])
-  const [selectedModel, setSelectedModel] = useState('llama3.2')
-  const [isGenerating, setIsGenerating] = useState(false)
 
   const addToHistory = useCallback((mode: string, inputText: string, outputText: string) => {
     saveToHistory({
@@ -305,36 +302,7 @@ export default function JsonFixTool() {
   }, [input, indent, addToHistory, toast, t])
 
   // Live mode with debounce
-  const [liveMode, setLiveMode] = useState(false)
-
-  // Load models from Ollama
-  useEffect(() => {
-    let mounted = true
-
-    const loadModels = async () => {
-      try {
-        const res = await fetch(`${API_BASE}/ollama/models`)
-        const data = await res.json()
-        if (mounted && data.success && data.models) {
-          setModels(data.models)
-          if (data.models.length > 0) {
-            const currentModelAvailable = data.models.some((m: OllamaModel) => m.name === selectedModel)
-            if (!currentModelAvailable) {
-              setSelectedModel(data.models[0].name)
-            }
-          }
-        }
-      } catch {
-        // Ollama might not be running
-      }
-    }
-
-    loadModels()
-
-    return () => {
-      mounted = false
-    }
-  }, [])
+  useLiveMode(liveMode, input, () => fixJson('live', true))
 
   // AI-powered JSON fix
   const fixJsonWithAI = async () => {
@@ -390,55 +358,10 @@ Output (pure JSON only, nothing else):`,
     }
   }
 
-  React.useEffect(() => {
-    if (!liveMode || !input) {
-      if (liveTimeoutRef.current) {
-        clearTimeout(liveTimeoutRef.current)
-        liveTimeoutRef.current = null
-      }
-      return
-    }
-
-    if (liveTimeoutRef.current) {
-      clearTimeout(liveTimeoutRef.current)
-    }
-
-    liveTimeoutRef.current = setTimeout(() => {
-      fixJson('auto', true)
-    }, DEBOUNCE_DELAY.LIVE_MODE)
-
-    return () => {
-      if (liveTimeoutRef.current) {
-        clearTimeout(liveTimeoutRef.current)
-      }
-    }
-  }, [input, liveMode, fixJson])
-
-  // Cleanup timeout on unmount
-  React.useEffect(() => {
-    return () => {
-      if (liveTimeoutRef.current) {
-        clearTimeout(liveTimeoutRef.current)
-      }
-    }
-  }, [])
-
-  const handleCopy = async (text: string) => {
-    const success = await copyToClipboard(text)
-    if (success) {
-      toast.success(t.toast.copySuccess)
-    } else {
-      toast.error(t.toast.copyFailed)
-    }
-  }
-
   const handlePaste = async () => {
-    const text = await pasteFromClipboard()
-    if (text !== null) {
+    const text = await pasteWithToast()
+    if (text) {
       setInput(text)
-      toast.success(t.toast.pasteSuccess)
-    } else {
-      toast.error(t.toast.pasteFailed)
     }
   }
 
@@ -520,7 +443,7 @@ Output (pure JSON only, nothing else):`,
                   <ArrowRight size={14} /> INPUT
                 </div>
                 <div className="panel-actions">
-                                    <button
+                  <button
                     className="panel-btn ai-btn"
                     onClick={fixJsonWithAI}
                     disabled={isGenerating}
@@ -570,7 +493,7 @@ Output (pure JSON only, nothing else):`,
                   <button className="panel-btn" onClick={swapInOut}>
                     <RefreshCcw size={14} /> 交换
                   </button>
-                  <button className="panel-btn" onClick={() => output && handleCopy(output)}>
+                  <button className="panel-btn" onClick={() => output && copyWithToast(output)}>
                     <Copy size={14} /> 复制
                   </button>
                 </div>
@@ -588,7 +511,7 @@ Output (pure JSON only, nothing else):`,
                   <span>{formatBytes(output?.length || 0)} bytes</span>
                 </div>
                 <div className="action-buttons">
-                  <button className="panel-btn" onClick={() => output && handleCopy(output)}>
+                  <button className="panel-btn" onClick={() => output && copyWithToast(output)}>
                     <Copy size={14} /> 复制
                   </button>
                 </div>

@@ -16,7 +16,7 @@ import {
 } from 'lucide-react'
 import Layout from '../components/Layout'
 import { HistoryPanel } from '../components/HistoryPanel'
-import { useHistory } from '../hooks/useHistory'
+import { useHistory, useClipboard } from '../hooks'
 import { useToastContext } from '../providers/ToastProvider'
 import { useI18n } from '../providers/I18nProvider'
 import { pasteFromClipboard, copyToClipboard } from '../utils'
@@ -42,6 +42,7 @@ export default function JsonDiff() {
   const [stats, setStats] = useState<DiffStats>({ added: 0, removed: 0 })
   const toast = useToastContext()
   const { t } = useI18n()
+  const { copyWithToast, pasteWithToast } = useClipboard()
   const {
     history,
     historyVisible,
@@ -52,24 +53,23 @@ export default function JsonDiff() {
     hideHistory
   } = useHistory<DiffHistoryItem>({ storageKey: STORAGE_KEYS.DIFF_HISTORY, toolName: 'diff' })
 
-  const pasteOldJSON = async () => {
-    const text = await pasteFromClipboard()
-    if (text !== null) {
-      setOldJson(text)
-      toast.success(t.toast.pasteSuccess)
-    } else {
-      toast.error(t.toast.pasteFailed)
+  const handlePaste = async (type: 'original' | 'modified') => {
+    const text = await pasteWithToast()
+    if (text) {
+      if (type === 'original') {
+        setOldJson(text)
+      } else {
+        setNewJson(text)
+      }
     }
   }
 
+  const pasteOldJSON = async () => {
+    handlePaste('original')
+  }
+
   const pasteNewJSON = async () => {
-    const text = await pasteFromClipboard()
-    if (text !== null) {
-      setNewJson(text)
-      toast.success(t.toast.pasteSuccess)
-    } else {
-      toast.error(t.toast.pasteFailed)
-    }
+    handlePaste('modified')
   }
 
   const clearOldJSON = () => {

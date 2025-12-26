@@ -12,8 +12,9 @@ import {
 } from 'lucide-react'
 import Layout from '../components/Layout'
 import { HistoryPanel } from '../components/HistoryPanel'
-import { useHistory } from '../hooks/useHistory'
-import { copyToClipboard, pasteFromClipboard } from '../utils'
+import { Panel } from '../components/Panel'
+import { ActionButtons } from '../components/ActionButtons'
+import { useHistory, useClipboard } from '../hooks'
 import { useToastContext } from '../providers/ToastProvider'
 import { useI18n } from '../providers/I18nProvider'
 import { STORAGE_KEYS, TIMEZONE_OFFSETS, TIME_MS } from '@/constants'
@@ -34,6 +35,7 @@ export default function TimestampConverter() {
   const [results, setResults] = useState<ConversionResult[]>([])
   const toast = useToastContext()
   const { t } = useI18n()
+  const { copyWithToast, pasteWithToast } = useClipboard()
   const {
     history,
     historyVisible,
@@ -145,26 +147,14 @@ export default function TimestampConverter() {
     setDate(now.toISOString())
   }
 
-  const handleCopy = async (text: string) => {
-    const success = await copyToClipboard(text)
-    if (success) {
-      toast.success(t.toast.copySuccess)
-    } else {
-      toast.error(t.toast.copyFailed)
-    }
-  }
-
   const handlePaste = async (type: 'timestamp' | 'date') => {
-    const text = await pasteFromClipboard()
+    const text = await pasteWithToast()
     if (text !== null) {
       if (type === 'timestamp') {
         setTimestamp(text)
       } else {
         setDate(text)
       }
-      toast.success(t.toast.pasteSuccess)
-    } else {
-      toast.error(t.toast.pasteFailed)
     }
   }
 
@@ -202,68 +192,60 @@ export default function TimestampConverter() {
         <div className="timestamp-container">
           <div className="panels">
             {/* Timestamp Input Panel */}
-            <div className="panel">
-              <div className="panel-header">
-                <div className="panel-title">
-                  <Clock size={14} /> 时间戳转换
-                </div>
-                <div className="panel-actions">
+            <Panel
+              title="时间戳转换"
+              icon={<Clock size={14} />}
+              actions={
+                <>
                   <button className="panel-btn" onClick={getCurrentTimestamp}>
                     当前时间戳
                   </button>
-                  <button className="panel-btn" onClick={() => handlePaste('timestamp')}>
-                    <Clipboard size={14} /> 粘贴
-                  </button>
-                  <button className="panel-btn" onClick={() => setTimestamp('')}>
-                    <Trash size={14} /> 清空
-                  </button>
-                </div>
-              </div>
-              <div className="panel-content">
-                <input
-                  type="text"
-                  value={timestamp}
-                  onChange={(e) => setTimestamp(e.target.value)}
-                  placeholder="输入 Unix 时间戳 (秒或毫秒)"
-                  style={{ width: '100%', marginBottom: '10px' }}
-                />
-                <button className="cyber-btn-small" onClick={convertTimestampToDate}>
-                  <Calendar size={14} /> 转换为日期
-                </button>
-              </div>
-            </div>
+                  <ActionButtons
+                    onPaste={() => handlePaste('timestamp')}
+                    onClear={() => setTimestamp('')}
+                  />
+                </>
+              }
+            >
+              <input
+                type="text"
+                value={timestamp}
+                onChange={(e) => setTimestamp(e.target.value)}
+                placeholder="输入 Unix 时间戳 (秒或毫秒)"
+                style={{ width: '100%', marginBottom: '10px' }}
+              />
+              <button className="cyber-btn-small" onClick={convertTimestampToDate}>
+                <Calendar size={14} /> 转换为日期
+              </button>
+            </Panel>
 
             {/* Date Input Panel */}
-            <div className="panel">
-              <div className="panel-header">
-                <div className="panel-title">
-                  <Calendar size={14} /> 日期转换
-                </div>
-                <div className="panel-actions">
+            <Panel
+              title="日期转换"
+              icon={<Calendar size={14} />}
+              actions={
+                <>
                   <button className="panel-btn" onClick={getCurrentDate}>
                     当前日期
                   </button>
-                  <button className="panel-btn" onClick={() => handlePaste('date')}>
-                    <Clipboard size={14} /> 粘贴
-                  </button>
-                  <button className="panel-btn" onClick={() => setDate('')}>
-                    <Trash size={14} /> 清空
-                  </button>
-                </div>
-              </div>
-              <div className="panel-content">
-                <input
-                  type="text"
-                  value={date}
-                  onChange={(e) => setDate(e.target.value)}
-                  placeholder="输入日期 (支持多种格式)"
-                  style={{ width: '100%', marginBottom: '10px' }}
-                />
-                <button className="cyber-btn-small" onClick={convertDateToTimestamp}>
-                  <Clock size={14} /> 转换为时间戳
-                </button>
-              </div>
-            </div>
+                  <ActionButtons
+                    onPaste={() => handlePaste('date')}
+                    onClear={() => setDate('')}
+                  />
+                </>
+              }
+            >
+              <input
+                type="text"
+                value={date}
+                onChange={(e) => setDate(e.target.value)}
+                placeholder="输入日期 (支持多种格式)"
+                style={{ width: '100%', marginBottom: '10px' }}
+              />
+              <button className="cyber-btn-small" onClick={convertDateToTimestamp}>
+                <Clock size={14} /> 转换为时间戳
+              </button>
+            </Panel>
           </div>
 
           {/* Results */}
@@ -290,7 +272,7 @@ export default function TimestampConverter() {
                       <div className="timestamp-value">{result.value}</div>
                       <button
                         className="panel-btn"
-                        onClick={() => handleCopy(result.value.toString())}
+                        onClick={() => copyWithToast(result.value.toString())}
                         style={{ marginTop: '8px' }}
                       >
                         <Copy size={14} /> 复制

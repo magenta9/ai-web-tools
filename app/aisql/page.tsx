@@ -20,8 +20,10 @@ import {
 } from 'lucide-react'
 import Layout from '../components/Layout'
 import { HistoryPanel } from '../components/HistoryPanel'
-import { useHistory } from '../hooks/useHistory'
-import { copyToClipboard } from '../utils'
+import { Panel } from '../components/Panel'
+import { ModelSelector } from '../components/ModelSelector'
+import { LoadingButton } from '../components/LoadingButton'
+import { useHistory, useOllamaModels, useClipboard } from '../hooks'
 import { useToastContext } from '../providers/ToastProvider'
 import { useI18n } from '../providers/I18nProvider'
 import { STORAGE_KEYS } from '@/constants'
@@ -60,11 +62,6 @@ interface AiSqlHistoryItem {
   dbConfig: DbConfig
 }
 
-interface OllamaModel {
-  name: string
-  size: number
-  modified_at: string
-}
 
 const DEFAULT_CONFIG: DbConfig = {
   type: 'mysql',
@@ -96,8 +93,8 @@ export default function AiSqlTool() {
   const lastLoadedDbRef = useRef<string | null>(null)
 
   // AI state
-  const [models, setModels] = useState<OllamaModel[]>([])
-  const [selectedModel, setSelectedModel] = useState('llama3.2')
+  const { models, selectedModel, setSelectedModel } = useOllamaModels()
+  const { copyWithToast } = useClipboard()
   const [isGenerating, setIsGenerating] = useState(false)
   const [isExecuting, setIsExecuting] = useState(false)
 
@@ -134,36 +131,6 @@ export default function AiSqlTool() {
       } catch {
         // Use default
       }
-    }
-  }, [])
-
-  // Load models from Ollama
-  useEffect(() => {
-    let mounted = true
-
-    const loadModels = async () => {
-      try {
-        const res = await fetch(`${API_BASE}/ollama/models`)
-        const data = await res.json()
-        if (mounted && data.success && data.models) {
-          setModels(data.models)
-          if (data.models.length > 0) {
-            // Check if current selected model is available
-            const currentModelAvailable = data.models.some((m: OllamaModel) => m.name === selectedModel)
-            if (!currentModelAvailable && data.models.length > 0) {
-              setSelectedModel(data.models[0].name)
-            }
-          }
-        }
-      } catch {
-        // Ollama might not be running
-      }
-    }
-
-    loadModels()
-
-    return () => {
-      mounted = false
     }
   }, [])
 
@@ -394,12 +361,7 @@ export default function AiSqlTool() {
   // Copy SQL
   const handleCopySQL = async () => {
     if (generatedSql) {
-      const success = await copyToClipboard(generatedSql)
-      if (success) {
-        toast.success(t.toast.copySuccess)
-      } else {
-        toast.error(t.toast.copyFailed)
-      }
+      await copyWithToast(generatedSql)
     }
   }
 

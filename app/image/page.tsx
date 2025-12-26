@@ -15,8 +15,8 @@ import {
 } from 'lucide-react'
 import Layout from '../components/Layout'
 import { HistoryPanel } from '../components/HistoryPanel'
-import { useHistory } from '../hooks/useHistory'
-import { copyToClipboard, pasteFromClipboard, formatBytes } from '../utils'
+import { useHistory, useClipboard } from '../hooks'
+import { formatBytes } from '../utils'
 import { useToastContext } from '../providers/ToastProvider'
 import { useI18n } from '../providers/I18nProvider'
 import { CDN_URLS, IMAGE_PRESETS, STORAGE_KEYS, EXAMPLES } from '@/constants'
@@ -50,6 +50,7 @@ export default function ImageConverter() {
   const [keyOutput, setKeyOutput] = useState('')
   const toast = useToastContext()
   const { t } = useI18n()
+  const { copyWithToast, pasteWithToast } = useClipboard()
   const {
     history,
     historyVisible,
@@ -126,14 +127,6 @@ export default function ImageConverter() {
     }
   }
 
-  const handleCopy = async (text: string) => {
-    const success = await copyToClipboard(text)
-    if (success) {
-      toast.success(t.toast.copySuccess)
-    } else {
-      toast.error(t.toast.copyFailed)
-    }
-  }
 
   const copyAllUrls = async () => {
     if (urlOutput.length === 0) {
@@ -141,25 +134,17 @@ export default function ImageConverter() {
       return
     }
 
-    const success = await copyToClipboard(urlOutput.map(u => u.url).join('\n'))
-    if (success) {
-      toast.success(t.toast.copySuccess)
-    } else {
-      toast.error(t.toast.copyFailed)
-    }
+    await copyWithToast(urlOutput.map(u => u.url).join('\n'))
   }
 
-  const handlePaste = async (type: 'key' | 'url') => {
-    const text = await pasteFromClipboard()
-    if (text !== null) {
-      if (type === 'key') {
+  const handlePaste = async () => {
+    const text = await pasteWithToast()
+    if (text) {
+      if (activeTab === 'key-to-url') {
         setKeyInput(text)
       } else {
         setUrlInput(text)
       }
-      toast.success(t.toast.pasteSuccess)
-    } else {
-      toast.error(t.toast.pasteFailed)
     }
   }
 
@@ -186,7 +171,7 @@ export default function ImageConverter() {
     if (event.ctrlKey || event.metaKey) {
       window.open(url, '_blank', 'noopener,noreferrer')
     } else {
-      handleCopy(url)
+      copyWithToast(url)
     }
   }
 
@@ -224,7 +209,7 @@ export default function ImageConverter() {
                         <Key size={14} /> INPUT KEY
                       </div>
                       <div className="panel-actions">
-                        <button className="panel-btn" onClick={() => handlePaste('key')}>
+                        <button className="panel-btn" onClick={handlePaste}>
                           <Clipboard size={14} /> PASTE
                         </button>
                         <button className="panel-btn" onClick={() => loadExample('key')}>
@@ -290,7 +275,7 @@ export default function ImageConverter() {
                                 <div className="url-item-actions">
                                   <button
                                     className="cyber-btn-small"
-                                    onClick={() => handleCopy(item.url)}
+                                    onClick={() => copyWithToast(item.url)}
                                   >
                                     <Copy size={14} /> 复制
                                   </button>
@@ -321,7 +306,7 @@ export default function ImageConverter() {
                         <Link size={14} /> INPUT URL
                       </div>
                       <div className="panel-actions">
-                        <button className="panel-btn" onClick={() => handlePaste('url')}>
+                        <button className="panel-btn" onClick={handlePaste}>
                           <Clipboard size={14} /> PASTE
                         </button>
                         <button className="panel-btn" onClick={() => loadExample('url')}>
@@ -361,7 +346,7 @@ export default function ImageConverter() {
                         <Key size={14} /> OUTPUT KEY
                       </div>
                       <div className="panel-actions">
-                        <button className="panel-btn" onClick={() => keyOutput && handleCopy(keyOutput)}>
+                        <button className="panel-btn" onClick={() => keyOutput && copyWithToast(keyOutput)}>
                           <Copy size={14} /> COPY
                         </button>
                       </div>
@@ -379,7 +364,7 @@ export default function ImageConverter() {
                           <div className="url-item-actions">
                             <button
                               className="cyber-btn-small"
-                              onClick={() => handleCopy(keyOutput)}
+                              onClick={() => copyWithToast(keyOutput)}
                             >
                               <Copy size={14} /> 复制
                             </button>

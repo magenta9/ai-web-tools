@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect, useCallback, useRef } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import {
   ArrowRight,
   Indent,
@@ -20,8 +20,8 @@ import {
 } from 'lucide-react'
 import Layout from '../components/Layout'
 import { HistoryPanel } from '../components/HistoryPanel'
-import { useHistory } from '../hooks/useHistory'
-import { copyToClipboard, pasteFromClipboard, formatBytes } from '../utils'
+import { useHistory, useClipboard, useLiveMode } from '../hooks'
+import { formatBytes } from '../utils'
 import { useToastContext } from '../providers/ToastProvider'
 import { useI18n } from '../providers/I18nProvider'
 import { DEBOUNCE_DELAY, STORAGE_KEYS } from '@/constants'
@@ -59,8 +59,13 @@ export default function JsonTool() {
   const [indent, setIndent] = useState(2)
   const [sortKeys, setSortKeys] = useState(true)
   const [liveMode, setLiveMode] = useState(false)
+  const [validationStatus, setValidationStatus] = useState<ValidationStatus>('empty')
+  const [error, setError] = useState('')
+  const [stats, setStats] = useState({ input: 0, output: 0 })
+
   const toast = useToastContext()
   const { t } = useI18n()
+  const { copyWithToast, pasteWithToast } = useClipboard()
   const {
     history,
     historyVisible,
@@ -70,11 +75,6 @@ export default function JsonTool() {
     showHistory,
     hideHistory
   } = useHistory<JsonHistoryItem>({ storageKey: STORAGE_KEYS.JSON_HISTORY, toolName: 'json' })
-  const [validationStatus, setValidationStatus] = useState<ValidationStatus>('empty')
-  const [error, setError] = useState('')
-  const [stats, setStats] = useState({ input: 0, output: 0 })
-
-  const liveTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
   const addToHistory = useCallback((mode: string, inputText: string, outputText: string) => {
     saveToHistory({
@@ -113,57 +113,29 @@ export default function JsonTool() {
   }, [input])
 
   // Live mode processing with debounce
-  useEffect(() => {
-    if (!liveMode || !input) {
-      if (liveTimeoutRef.current) {
-        clearTimeout(liveTimeoutRef.current)
-        liveTimeoutRef.current = null
-      }
-      return
-    }
+  const processLiveMode = useCallback(() => {
+    try {
+      const raw = input.trim()
+      if (!raw) return
 
-    if (liveTimeoutRef.current) {
-      clearTimeout(liveTimeoutRef.current)
-    }
-
-    liveTimeoutRef.current = setTimeout(() => {
-      // Process JSON inline for live mode
+      let obj: JsonValue
       try {
-        const raw = input.trim()
-        if (!raw) return
-
-        let obj: JsonValue
-        try {
-          obj = JSON.parse(raw) as JsonValue
-        } catch (e) {
-          return
-        }
-
-        if (sortKeys) {
-          obj = sortObjectKeys(obj)
-        }
-        const result = JSON.stringify(obj, null, indent)
-        setOutput(result)
-      } catch {
-        // Silent error handling in live mode
+        obj = JSON.parse(raw) as JsonValue
+      } catch (e) {
+        return
       }
-    }, DEBOUNCE_DELAY.LIVE_MODE)
 
-    return () => {
-      if (liveTimeoutRef.current) {
-        clearTimeout(liveTimeoutRef.current)
+      if (sortKeys) {
+        obj = sortObjectKeys(obj)
       }
+      const result = JSON.stringify(obj, null, indent)
+      setOutput(result)
+    } catch {
+      // Silent error handling in live mode
     }
-  }, [input, liveMode, indent, sortKeys])
+  }, [input, indent, sortKeys])
 
-  // Cleanup timeout on unmount
-  useEffect(() => {
-    return () => {
-      if (liveTimeoutRef.current) {
-        clearTimeout(liveTimeoutRef.current)
-      }
-    }
-  }, [])
+  useLiveMode(liveMode, input, processLiveMode)
 
   const processJSON = useCallback((mode: string, silent = false) => {
     const raw = input.trim()
@@ -255,22 +227,10 @@ export default function JsonTool() {
     }
   }
 
-  const handleCopy = async (text: string) => {
-    const success = await copyToClipboard(text)
-    if (success) {
-      toast.success(t.toast.copySuccess)
-    } else {
-      toast.error(t.toast.copyFailed)
-    }
-  }
-
   const handlePaste = async () => {
-    const text = await pasteFromClipboard()
-    if (text !== null) {
+    const text = await pasteWithToast()
+    if (text) {
       setInput(text)
-      toast.success(t.toast.pasteSuccess)
-    } else {
-      toast.error(t.toast.pasteFailed)
     }
   }
 
@@ -402,7 +362,7 @@ export default function JsonTool() {
                   <button className="panel-btn" onClick={swapInOut}>
                     <ArrowLeftRight size={14} /> 交换
                   </button>
-                  <button className="panel-btn" onClick={() => output && handleCopy(output)}>
+                  <button className="panel-btn" onClick={() => output && copyWithToast(output)}>
                     <Copy size={14} /> 复制
                   </button>
                 </div>
@@ -420,7 +380,7 @@ export default function JsonTool() {
                   <span>{formatBytes(stats.output)} bytes</span>
                 </div>
                 <div className="action-buttons">
-                  <button className="panel-btn" onClick={() => output && handleCopy(output)}>
+                  <button className="panel-btn" onClick={() => output && copyWithToast(output)}>
                     <Copy size={14} /> 复制
                   </button>
                 </div>

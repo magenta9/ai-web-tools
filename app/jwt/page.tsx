@@ -14,8 +14,7 @@ import {
 import { SignJWT } from 'jose'
 import Layout from '../components/Layout'
 import { HistoryPanel } from '../components/HistoryPanel'
-import { useHistory } from '../hooks/useHistory'
-import { copyToClipboard, pasteFromClipboard } from '../utils'
+import { useHistory, useClipboard } from '../hooks'
 import { useToastContext } from '../providers/ToastProvider'
 import { useI18n } from '../providers/I18nProvider'
 import { STORAGE_KEYS, JWT_DEFAULTS, EXAMPLES } from '@/constants'
@@ -39,6 +38,7 @@ export default function JwtTool() {
   const [showSecret, setShowSecret] = useState(false)
   const toast = useToastContext()
   const { t } = useI18n()
+  const { copyWithToast, pasteWithToast } = useClipboard()
   const {
     history,
     historyVisible,
@@ -109,18 +109,9 @@ export default function JwtTool() {
     }
   }
 
-  const handleCopy = async (text: string) => {
-    const success = await copyToClipboard(text)
-    if (success) {
-      toast.success(t.toast.copySuccess)
-    } else {
-      toast.error(t.toast.copyFailed)
-    }
-  }
-
   const handlePaste = async (type: 'jwt' | 'header' | 'payload') => {
-    const text = await pasteFromClipboard()
-    if (text !== null) {
+    const text = await pasteWithToast()
+    if (text) {
       if (type === 'jwt') {
         setJwtInput(text)
       } else if (type === 'header') {
@@ -224,7 +215,7 @@ export default function JwtTool() {
                           Header
                           <button
                             className="panel-btn"
-                            onClick={() => handleCopy(header)}
+                            onClick={() => copyWithToast(header)}
                             style={{ float: 'right' }}
                           >
                             <Copy size={14} /> 复制
@@ -240,7 +231,7 @@ export default function JwtTool() {
                           Payload
                           <button
                             className="panel-btn"
-                            onClick={() => handleCopy(payload)}
+                            onClick={() => copyWithToast(payload)}
                             style={{ float: 'right' }}
                           >
                             <Copy size={14} /> 复制
@@ -362,7 +353,7 @@ export default function JwtTool() {
                         Generated JWT
                         <button
                           className="panel-btn"
-                          onClick={() => handleCopy(encodedJwt)}
+                          onClick={() => copyWithToast(encodedJwt)}
                           style={{ float: 'right' }}
                         >
                           <Copy size={14} /> 复制

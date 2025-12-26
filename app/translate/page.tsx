@@ -1,9 +1,12 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import Layout from '../components/Layout'
 import { HistoryPanel } from '../components/HistoryPanel'
-import { useHistory } from '../hooks/useHistory'
+import { Panel } from '../components/Panel'
+import { ModelSelector } from '../components/ModelSelector'
+import { LoadingButton } from '../components/LoadingButton'
+import { useHistory, useOllamaModels, useClipboard } from '../hooks'
 import { Languages, ArrowRightLeft, Copy, Loader2, History } from 'lucide-react'
 import { STORAGE_KEYS } from '@/constants'
 import '../tools.css'
@@ -39,11 +42,11 @@ export default function TranslatePage() {
     const [sourceLang, setSourceLang] = useState('zh')
     const [targetLang, setTargetLang] = useState('en')
     const [style, setStyle] = useState('standard')
-    const [selectedModel, setSelectedModel] = useState('llama3.2')
-    const [availableModels, setAvailableModels] = useState<any[]>([])
     const [isTranslating, setIsTranslating] = useState(false)
     const [error, setError] = useState('')
 
+    const { models: availableModels, selectedModel, setSelectedModel } = useOllamaModels()
+    const { copyWithToast } = useClipboard()
     const {
         history,
         historyVisible,
@@ -54,37 +57,6 @@ export default function TranslatePage() {
         hideHistory
     } = useHistory<TranslateHistoryItem>({ storageKey: STORAGE_KEYS.TRANSLATE_HISTORY, toolName: 'translate' })
 
-    // Load available models on component mount
-    useEffect(() => {
-        let mounted = true
-
-        const loadModels = async () => {
-            try {
-                const response = await fetch('http://localhost:3001/api/ollama/models')
-                if (!response.ok) throw new Error('Network response was not ok')
-                const data = await response.json()
-                if (mounted && data.success && data.models) {
-                    setAvailableModels(data.models)
-                    // Only set selected model if current one is not in the list
-                    if (data.models.length > 0 && !data.models.find((m: any) => m.name === selectedModel)) {
-                        setSelectedModel(data.models[0].name)
-                    }
-                }
-            } catch (err) {
-                if (mounted) {
-                    console.error('Failed to load models:', err)
-                    // Set default model if API fails
-                    setAvailableModels([{ name: 'llama3.2' }])
-                }
-            }
-        }
-
-        loadModels()
-
-        return () => {
-            mounted = false
-        }
-    }, [])
 
     const handleTranslate = async () => {
         if (!sourceText.trim()) return
