@@ -311,7 +311,7 @@ export default function AiSqlTool() {
       const data = await res.json()
 
       if (data.success) {
-        setGeneratedSql(data.sql)
+        setGeneratedSql(data.response)
         toast.success('SQL generated')
       } else {
         toast.error(`Generation failed: ${data.error}`)
@@ -425,6 +425,12 @@ export default function AiSqlTool() {
     setQueryHeaders([])
     setQueryRows([])
     setQueryHasTabs(false)
+    // Restore database config
+    if (item.dbConfig) {
+      const savedConfig = { ...item.dbConfig, password: '' }
+      setConfig(savedConfig)
+      localStorage.setItem('aisql_db_config', JSON.stringify(savedConfig))
+    }
     hideHistory()
     toast.success(t.toast.loadSuccess)
   }

@@ -29,6 +29,7 @@ services:
     environment:
       - DATABASE_URL=postgres://webtools:webtools123@postgres:5432/webtools?sslmode=disable
       - OLLAMA_HOST=http://host.docker.internal:11434
+      - DB_HOST=postgres
     depends_on:
       postgres:
         condition: service_healthy

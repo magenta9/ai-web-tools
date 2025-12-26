@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/webtools/server/internal/config"
@@ -18,8 +19,25 @@ func New(cfg *config.Config) (*Repository, error) {
 	dsn := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable",
 		cfg.DBUser, cfg.DBPassword, cfg.DBHost, cfg.DBPort, cfg.DBName)
 
-	pool, err := pgxpool.New(context.Background(), dsn)
+	config, err := pgxpool.ParseConfig(dsn)
 	if err != nil {
+		return nil, err
+	}
+
+	// 连接池调优配置
+	config.MaxConns = 25
+	config.MinConns = 5
+	config.MaxConnLifetime = time.Hour
+	config.MaxConnIdleTime = 30 * time.Minute
+	config.HealthCheckPeriod = time.Minute
+
+	pool, err := pgxpool.NewWithConfig(context.Background(), config)
+	if err != nil {
+		return nil, err
+	}
+
+	// 启动时验证连接
+	if err := pool.Ping(context.Background()); err != nil {
 		return nil, err
 	}
 
@@ -31,10 +49,16 @@ func (r *Repository) Close() {
 }
 
 func (r *Repository) SaveHistory(ctx context.Context, h *model.ToolHistory) error {
-	inputJSON, _ := json.Marshal(h.InputData)
-	outputJSON, _ := json.Marshal(h.OutputData)
+	inputJSON, err := json.Marshal(h.InputData)
+	if err != nil {
+		return fmt.Errorf("failed to marshal input_data: %w", err)
+	}
+	outputJSON, err := json.Marshal(h.OutputData)
+	if err != nil {
+		return fmt.Errorf("failed to marshal output_data: %w", err)
+	}
 
-	_, err := r.pool.Exec(ctx,
+	_, err = r.pool.Exec(ctx,
 		`INSERT INTO tool_history (tool_name, input_data, output_data) VALUES ($1, $2, $3)`,
 		h.ToolName, inputJSON, outputJSON)
 	return err
@@ -61,8 +85,12 @@ func (r *Repository) GetHistory(ctx context.Context, toolName string, limit int)
 		if err := rows.Scan(&h.ID, &h.ToolName, &inputJSON, &outputJSON, &h.CreatedAt); err != nil {
 			return nil, err
 		}
-		json.Unmarshal(inputJSON, &h.InputData)
-		json.Unmarshal(outputJSON, &h.OutputData)
+		if err := json.Unmarshal(inputJSON, &h.InputData); err != nil {
+			return nil, fmt.Errorf("failed to unmarshal input_data: %w", err)
+		}
+		if err := json.Unmarshal(outputJSON, &h.OutputData); err != nil {
+			return nil, fmt.Errorf("failed to unmarshal output_data: %w", err)
+		}
 		results = append(results, h)
 	}
 	return results, nil
@@ -77,13 +105,18 @@ func (r *Repository) GetConfig(ctx context.Context, key string) (*model.Config, 
 	if err != nil {
 		return nil, err
 	}
-	json.Unmarshal(valueJSON, &c.Value)
+	if err := json.Unmarshal(valueJSON, &c.Value); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal config value: %w", err)
+	}
 	return &c, nil
 }
 
 func (r *Repository) SetConfig(ctx context.Context, key string, value any) error {
-	valueJSON, _ := json.Marshal(value)
-	_, err := r.pool.Exec(ctx,
+	valueJSON, err := json.Marshal(value)
+	if err != nil {
+		return fmt.Errorf("failed to marshal config value: %w", err)
+	}
+	_, err = r.pool.Exec(ctx,
 		`INSERT INTO config (key, value, updated_at) VALUES ($1, $2, NOW())
 		 ON CONFLICT (key) DO UPDATE SET value = $2, updated_at = NOW()`, key, valueJSON)
 	return err

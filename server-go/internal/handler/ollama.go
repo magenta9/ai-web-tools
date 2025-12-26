@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/webtools/server/internal/config"
@@ -56,7 +55,7 @@ func (h *OllamaHandler) GetModels(c *gin.Context) {
 		}
 	}
 
-	c.JSON(200, gin.H{"success": true, "models": models, "host": h.host})
+	c.JSON(200, gin.H{"success": true, "models": models})
 }
 
 func (h *OllamaHandler) Generate(c *gin.Context) {
@@ -110,14 +109,7 @@ Write only the SQL query, nothing else. Do not include markdown code blocks.`, r
 		return
 	}
 
-	// Clean up the SQL (remove markdown code blocks if any)
-	sql := result
-	sql = strings.TrimPrefix(sql, "```sql")
-	sql = strings.TrimPrefix(sql, "```")
-	sql = strings.TrimSuffix(sql, "```")
-	sql = strings.TrimSpace(sql)
-
-	c.JSON(200, gin.H{"success": true, "sql": sql, "response": result})
+	c.JSON(200, gin.H{"success": true, "response": result})
 }
 
 func (h *OllamaHandler) Chat(c *gin.Context) {

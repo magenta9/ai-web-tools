@@ -721,6 +721,28 @@
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
 }
 
+/* History Panel Buttons - Unified with panel-btn style */
+.aisql-tool .history-header .cyber-btn-small {
+  padding: 8px 16px;
+  background: transparent;
+  border: 1px solid #3f3f46;
+  color: #a1a1aa;
+  font-weight: 500;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.aisql-tool .history-header .cyber-btn-small:hover {
+  background: #27272a;
+  border-color: #52525b;
+  color: #fafafa;
+}
+
 /* Empty state */
 .empty-state {
   display: flex;

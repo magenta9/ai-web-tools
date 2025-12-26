@@ -67,17 +67,19 @@ function safeSetToStorage<T extends BaseHistoryItem>(key: string, data: T[]): vo
 }
 
 // Backend API functions
-async function saveToBackend(toolName: string, item: BaseHistoryItem): Promise<void> {
+async function saveToBackend(toolName: string, item: BaseHistoryItem & Record<string, unknown>): Promise<void> {
     if (!toolName) return
 
     try {
+        // Extract known fields and pass through any additional fields
+        const { type, input, output, data, ...extraFields } = item
         await fetch('http://localhost:3001/api/history', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 tool_name: toolName,
-                input_data: { type: item.type, input: item.input, data: item.data },
-                output_data: { output: item.output }
+                input_data: { type, input, data, ...extraFields },
+                output_data: { output }
             })
         })
     } catch (error) {
@@ -94,14 +96,19 @@ async function loadFromBackend(toolName: string, limit = 50): Promise<(BaseHisto
 
         const data = await response.json()
         if (data.success && data.history) {
-            return data.history.map((h: any) => ({
-                id: h.id,
-                type: h.input_data?.type || 'default',
-                input: h.input_data?.input || '',
-                output: h.output_data?.output || '',
-                timestamp: new Date(h.created_at).getTime(),
-                data: h.input_data?.data
-            }))
+            return data.history.map((h: any) => {
+                // Extract known fields from input_data
+                const { type, input, data: itemData, ...extraFields } = h.input_data || {}
+                return {
+                    id: h.id,
+                    type: type || 'default',
+                    input: input || '',
+                    output: h.output_data?.output || '',
+                    timestamp: new Date(h.created_at).getTime(),
+                    data: itemData,
+                    ...extraFields  // Preserve extra fields like dbConfig, mode, etc.
+                }
+            })
         }
         return []
     } catch (error) {
