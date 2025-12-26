@@ -1,8 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-
-const API_BASE = 'http://localhost:3001/api'
+import { API_BASE } from '@/constants'
 
 export interface OllamaModel {
     name: string

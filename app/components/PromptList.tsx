@@ -1,3 +1,6 @@
+import type { Prompt } from '@/types'
+import { Tag, Copy, Edit, Trash2 } from 'lucide-react'
+
 interface PromptListProps {
     prompts: Prompt[]
     onEdit: (prompt: Prompt) => void

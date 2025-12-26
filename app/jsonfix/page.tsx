@@ -23,10 +23,8 @@ import { useHistory, useOllamaModels, useClipboard, useLiveMode } from '../hooks
 import { formatBytes } from '../utils'
 import { useToastContext } from '../providers/ToastProvider'
 import { useI18n } from '../providers/I18nProvider'
-import { DEBOUNCE_DELAY, STORAGE_KEYS } from '@/constants'
+import { DEBOUNCE_DELAY, STORAGE_KEYS, API_BASE } from '@/constants'
 import '../tools.css'
-
-const API_BASE = 'http://localhost:3001/api'
 
 interface JsonFixHistoryItem {
   type: string

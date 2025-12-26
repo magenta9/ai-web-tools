@@ -8,7 +8,7 @@ import { ModelSelector } from '../components/ModelSelector'
 import { LoadingButton } from '../components/LoadingButton'
 import { useHistory, useOllamaModels, useClipboard } from '../hooks'
 import { Languages, ArrowRightLeft, Copy, Loader2, History } from 'lucide-react'
-import { STORAGE_KEYS } from '@/constants'
+import { STORAGE_KEYS, API_BASE } from '@/constants'
 import '../tools.css'
 
 const languages = [
@@ -66,7 +66,7 @@ export default function TranslatePage() {
         setTranslatedText('')
 
         try {
-            const response = await fetch('http://localhost:3001/api/ollama/translate', {
+            const response = await fetch(`${API_BASE}/ollama/translate`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'

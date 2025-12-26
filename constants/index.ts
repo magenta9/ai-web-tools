@@ -2,6 +2,9 @@
  * Shared constants for web-tools
  */
 
+// API Configuration
+export const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'
+
 // CDN URLs
 export const CDN_URLS = {
     BASE: 'https://cdn.lokboxes.ai/',
@@ -27,6 +30,12 @@ export const DEFAULT_JSON_INDENT = 2
 // History
 export const MAX_HISTORY_ITEMS = 100
 export const HISTORY_PREVIEW_LENGTH = 200
+
+// Database default ports
+export const DB_PORTS = {
+    MYSQL: 3306,
+    POSTGRES: 5432,
+} as const
 
 // Storage keys
 export const STORAGE_KEYS = {

@@ -26,7 +26,8 @@ import { LoadingButton } from '../components/LoadingButton'
 import { useHistory, useOllamaModels, useClipboard } from '../hooks'
 import { useToastContext } from '../providers/ToastProvider'
 import { useI18n } from '../providers/I18nProvider'
-import { STORAGE_KEYS } from '@/constants'
+import { STORAGE_KEYS, DB_PORTS, API_BASE } from '@/constants'
+import { formatBytes } from '../utils'
 import './tools.css'
 
 interface DbConfig {
@@ -72,8 +73,6 @@ const DEFAULT_CONFIG: DbConfig = {
   database: '',
   ssl: false
 }
-
-const API_BASE = 'http://localhost:3001/api'
 
 export default function AiSqlTool() {
   const toast = useToastContext()
@@ -397,15 +396,6 @@ export default function AiSqlTool() {
     toast.success(t.toast.loadSuccess)
   }
 
-  // Format bytes
-  const formatBytes = (bytes: number) => {
-    if (bytes === 0) return '0 B'
-    const k = 1024
-    const sizes = ['B', 'KB', 'MB', 'GB']
-    const i = Math.floor(Math.log(bytes) / Math.log(k))
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
-  }
-
   return (
     <Layout>
       <div className="aisql-tool">
@@ -445,7 +435,7 @@ export default function AiSqlTool() {
                 value={config.type}
                 onChange={(e) => {
                   const newType = e.target.value as 'mysql' | 'postgres'
-                  const newPort = newType === 'mysql' ? 3306 : 5432
+                  const newPort = newType === 'mysql' ? DB_PORTS.MYSQL : DB_PORTS.POSTGRES
                   saveConfig({ ...config, type: newType, port: newPort })
                 }}
               >

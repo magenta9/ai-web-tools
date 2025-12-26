@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useCallback, useEffect } from 'react'
-import { MAX_HISTORY_ITEMS } from '@/constants'
+import { MAX_HISTORY_ITEMS, API_BASE } from '@/constants'
 
 export interface BaseHistoryItem {
     type: string
@@ -73,7 +73,7 @@ async function saveToBackend(toolName: string, item: BaseHistoryItem & Record<st
     try {
         // Extract known fields and pass through any additional fields
         const { type, input, output, data, ...extraFields } = item
-        await fetch('http://localhost:3001/api/history', {
+        await fetch(`${API_BASE}/history`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -91,7 +91,7 @@ async function loadFromBackend(toolName: string, limit = 50): Promise<(BaseHisto
     if (!toolName) return []
 
     try {
-        const response = await fetch(`http://localhost:3001/api/history?tool_name=${toolName}&limit=${limit}`)
+        const response = await fetch(`${API_BASE}/history?tool_name=${toolName}&limit=${limit}`)
         if (!response.ok) return []
 
         const data = await response.json()
@@ -119,7 +119,7 @@ async function loadFromBackend(toolName: string, limit = 50): Promise<(BaseHisto
 
 async function deleteFromBackend(id: number): Promise<boolean> {
     try {
-        const response = await fetch(`http://localhost:3001/api/history/${id}`, {
+        const response = await fetch(`${API_BASE}/history/${id}`, {
             method: 'DELETE'
         })
         return response.ok
@@ -131,7 +131,7 @@ async function deleteFromBackend(id: number): Promise<boolean> {
 
 async function clearFromBackend(toolName: string): Promise<boolean> {
     try {
-        const response = await fetch(`http://localhost:3001/api/history?tool_name=${toolName}`, {
+        const response = await fetch(`${API_BASE}/history?tool_name=${toolName}`, {
             method: 'DELETE'
         })
         return response.ok
@@ -170,7 +170,7 @@ export function useHistory<T extends BaseHistoryItem>(options: UseHistoryOptions
 
         // Sync to backend if toolName is provided and syncToBackend is true
         if (toolName && syncToBackend) {
-            saveToBackend(toolName, newItem)
+            saveToBackend(toolName, newItem as BaseHistoryItem & Record<string, unknown>)
         }
     }, [storageKey, maxItems, toolName])
 
