@@ -1,31 +1,37 @@
-# Web Tools
+# AI Web Tools
 
-一套实用的 Web 开发工具集，基于 Next.js 和 TypeScript 构建。
+一套基于 AI 的 Web 开发工具集，提供强大的 AI 辅助功能和实用的开发工具。
 
 ## 功能特性
 
+### AI 工具
+- **AI Chat**: AI 对话助手，支持 Prompt 模板管理
+- **AI SQL**: 自然语言转 SQL 查询
+- **JSON Fix**: AI 辅助修复损坏的 JSON
+- **Translate**: AI 多语言翻译（中英日）
+
+### 常规工具
 - **JWT Tool**: JWT 编码和解码
 - **JSON Tool**: JSON 格式化、验证和处理
-- **JSON Fix**: AI 辅助修复损坏的 JSON
 - **Image Tool**: 图片格式转换和尺寸调整
 - **Timestamp Tool**: 时间戳格式转换
 - **Diff Tool**: 文本差异对比
-- **Translate Tool**: AI 翻译工具
-- **AI SQL**: AI 辅助 SQL 生成
 
 ## 项目结构
 
 ```
-web-tools/
+ai-web-tools/
 ├── app/                    # Next.js 前端
+│   ├── chat/              # AI 对话助手
+│   ├── prompt/            # Prompt 管理系统
+│   ├── aisql/             # AI SQL 工具
+│   ├── translate/         # AI 翻译工具
+│   ├── jsonfix/           # JSON 修复工具
 │   ├── jwt/               # JWT 工具
 │   ├── json/              # JSON 工具
-│   ├── jsonfix/           # JSON 修复工具
 │   ├── image/             # 图片工具
 │   ├── timestamp/         # 时间戳工具
 │   ├── diff/              # 差异对比工具
-│   ├── translate/         # 翻译工具
-│   ├── aisql/             # AI SQL 工具
 │   └── components/        # 公共组件
 ├── server-go/             # Go API 服务器
 │   ├── cmd/server/        # 入口

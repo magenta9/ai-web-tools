@@ -1,4 +1,4 @@
-module github.com/webtools/server
+module github.com/magenta9/ai-web-tools/server
 
 go 1.23
 

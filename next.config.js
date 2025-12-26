@@ -3,8 +3,8 @@ const nextConfig = {
   reactStrictMode: true,
   output: 'export',
   trailingSlash: true,
-  basePath: process.env.NODE_ENV === 'production' ? '/web-tools' : '',
-  assetPrefix: process.env.NODE_ENV === 'production' ? '/web-tools/' : '',
+  basePath: process.env.NODE_ENV === 'production' ? '/ai-web-tools' : '',
+  assetPrefix: process.env.NODE_ENV === 'production' ? '/ai-web-tools/' : '',
   images: {
     unoptimized: true
   }

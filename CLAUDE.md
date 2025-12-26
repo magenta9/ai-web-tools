@@ -43,12 +43,12 @@ bun lint
 
 ## Project Architecture
 
-A **static web application** built with Next.js 15 and App Router, configured for static export. The app provides 8 developer tools that run entirely client-side.
+A **static web application** built with Next.js 15 and App Router, configured for static export. The app provides 10 developer tools including AI-powered features.
 
 ### Static Export Configuration
 
 - `next.config.js` sets `output: 'export'` for static generation
-- Base path `/web-tools` and asset prefix applied in production
+- Base path `/ai-web-tools` and asset prefix applied in production
 - Build outputs to `/out` directory with `.nojekyll` file for GitHub Pages
 - Images are unoptimized (static export limitation)
 
@@ -71,14 +71,19 @@ Each tool follows this pattern:
 
 ### Current Tools
 
+**AI Tools:**
+1. **chat** - AI chat assistant with prompt management
+2. **prompt** - Prompt template management system
+3. **aisql** - Natural language to SQL
+4. **jsonfix** - AI JSON fix
+5. **translate** - AI translation
+
+**Regular Tools:**
 1. **jwt** - JWT encode/decode
 2. **json** - JSON format/validate
 3. **image** - Image conversion
 4. **timestamp** - Timestamp conversion
 5. **diff** - Text comparison
-6. **aisql** - Natural language to SQL
-7. **jsonfix** - AI JSON fix
-8. **translate** - AI translation
 
 ## Important Implementation Details
 
@@ -89,4 +94,4 @@ Each tool follows this pattern:
 
 ## Deployment
 
-GitHub Pages workflow in `.github/workflows/deploy.yml` auto-deploys on push to main. Static files served from `/web-tools/` subdirectory.
+GitHub Pages workflow in `.github/workflows/deploy.yml` auto-deploys on push to main. Static files served from `/ai-web-tools/` subdirectory.

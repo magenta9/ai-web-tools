@@ -1,6 +1,6 @@
-# Web Tools Go Server
+# AI Web Tools Go Server
 
-用于 Web Tools 的 Go API 服务器，替代原有的 Node.js 服务器。
+用于 AI Web Tools 的 Go API 服务器，替代原有的 Node.js 服务器。
 
 ## 目录结构
 
