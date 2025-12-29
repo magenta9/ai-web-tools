@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"bufio"
 	"bytes"
 	"encoding/json"
 	"fmt"
@@ -8,7 +9,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/webtools/server/internal/config"
+	"github.com/magenta9/ai-web-tools/server/internal/config"
 )
 
 type OllamaHandler struct {
@@ -116,6 +117,7 @@ func (h *OllamaHandler) Chat(c *gin.Context) {
 	var req struct {
 		Message  string `json:"message"`
 		Model    string `json:"model"`
+		Stream   bool   `json:"stream,omitempty"`
 		Messages []struct {
 			Role      string `json:"role"`
 			Content   string `json:"content"`
@@ -136,27 +138,34 @@ func (h *OllamaHandler) Chat(c *gin.Context) {
 		}
 	}
 
-	var result string
-	var err error
-
-	// Use chat history if provided
+	// Build messages array for Ollama
+	messages := []map[string]any{}
 	if len(req.Messages) > 0 {
-		// Build messages array for Ollama
-		messages := []map[string]any{}
 		for _, msg := range req.Messages {
 			messages = append(messages, map[string]any{
 				"role":    msg.Role,
 				"content": msg.Content,
 			})
 		}
-		// Append current message
-		messages = append(messages, map[string]any{
-			"role":    "user",
-			"content": req.Message,
-		})
+	}
+	// Append current message
+	messages = append(messages, map[string]any{
+		"role":    "user",
+		"content": req.Message,
+	})
+
+	// Handle streaming if requested
+	if req.Stream {
+		h.streamChat(c, messages, model)
+		return
+	}
+
+	// Non-streaming response
+	var result string
+	var err error
+	if len(req.Messages) > 0 {
 		result, err = h.chatWithHistory(messages, model)
 	} else {
-		// Fallback to single message for backward compatibility
 		result, err = h.generate(req.Message, model)
 	}
 
@@ -303,4 +312,64 @@ func (h *OllamaHandler) getFirstAvailableModel() string {
 		}
 	}
 	return ""
+}
+
+func (h *OllamaHandler) streamChat(c *gin.Context, messages []map[string]any, model string) {
+	body, _ := json.Marshal(map[string]any{
+		"model":    model,
+		"messages": messages,
+		"stream":   true,
+		"options": map[string]any{
+			"temperature": 0.7,
+			"num_predict": 2000,
+		},
+	})
+
+	resp, err := http.Post(h.host+"/api/chat", "application/json", bytes.NewReader(body))
+	if err != nil {
+		c.JSON(500, gin.H{"success": false, "error": err.Error()})
+		return
+	}
+	defer resp.Body.Close()
+
+	// Set headers for SSE
+	c.Header("Content-Type", "text/event-stream")
+	c.Header("Cache-Control", "no-cache")
+	c.Header("Connection", "keep-alive")
+	c.Header("X-Accel-Buffering", "no")
+
+	flusher, ok := c.Writer.(http.Flusher)
+	if !ok {
+		c.JSON(500, gin.H{"success": false, "error": "Streaming not supported"})
+		return
+	}
+
+	scanner := bufio.NewScanner(resp.Body)
+	for scanner.Scan() {
+		line := scanner.Bytes()
+		if len(line) == 0 {
+			continue
+		}
+
+		var chunk map[string]any
+		if err := json.Unmarshal(line, &chunk); err != nil {
+			continue
+		}
+
+		// Extract message content
+		if message, ok := chunk["message"].(map[string]any); ok {
+			if content, ok := message["content"].(string); ok && content != "" {
+				// Send as SSE
+				c.Writer.WriteString(fmt.Sprintf("data: %s\n\n", content))
+				flusher.Flush()
+			}
+		}
+
+		// Check if done
+		if done, ok := chunk["done"].(bool); ok && done {
+			c.Writer.WriteString("data: [DONE]\n\n")
+			flusher.Flush()
+			break
+		}
+	}
 }

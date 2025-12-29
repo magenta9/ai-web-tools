@@ -7,8 +7,8 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/webtools/server/internal/config"
-	"github.com/webtools/server/internal/model"
+	"github.com/magenta9/ai-web-tools/server/internal/config"
+	"github.com/magenta9/ai-web-tools/server/internal/model"
 )
 
 type Repository struct {

@@ -436,7 +436,7 @@ export default function AiSqlTool() {
                 onChange={(e) => {
                   const newType = e.target.value as 'mysql' | 'postgres'
                   const newPort = newType === 'mysql' ? DB_PORTS.MYSQL : DB_PORTS.POSTGRES
-                  saveConfig({ ...config, type: newType, port: newPort })
+                  saveConfig({ ...config, type: newType, port: newPort, database: '' })
                 }}
               >
                 <option value="mysql">MySQL</option>
@@ -448,7 +448,7 @@ export default function AiSqlTool() {
               <input
                 type="text"
                 value={config.host}
-                onChange={(e) => saveConfig({ ...config, host: e.target.value })}
+                onChange={(e) => saveConfig({ ...config, host: e.target.value, database: '' })}
                 placeholder="localhost"
               />
             </div>
@@ -457,7 +457,7 @@ export default function AiSqlTool() {
               <input
                 type="number"
                 value={config.port}
-                onChange={(e) => saveConfig({ ...config, port: parseInt(e.target.value) || 3306 })}
+                onChange={(e) => saveConfig({ ...config, port: parseInt(e.target.value) || 3306, database: '' })}
                 placeholder="3306"
               />
             </div>

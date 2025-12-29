@@ -6,9 +6,9 @@ import (
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
-	"github.com/webtools/server/internal/config"
-	"github.com/webtools/server/internal/handler"
-	"github.com/webtools/server/internal/repository"
+	"github.com/magenta9/ai-web-tools/server/internal/config"
+	"github.com/magenta9/ai-web-tools/server/internal/handler"
+	"github.com/magenta9/ai-web-tools/server/internal/repository"
 )
 
 func main() {

@@ -4,8 +4,8 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
-	"github.com/webtools/server/internal/model"
-	"github.com/webtools/server/internal/repository"
+	"github.com/magenta9/ai-web-tools/server/internal/model"
+	"github.com/magenta9/ai-web-tools/server/internal/repository"
 )
 
 type HistoryHandler struct {

@@ -11,13 +11,14 @@ import {
     Loader
 } from 'lucide-react'
 import Layout from '../components/Layout'
-import { PromptSelector, ModelSelector } from '../components'
-import { useClipboard, useOllamaModels } from '../hooks'
+import { PromptSelector, ModelSelector, HistoryPanel } from '../components'
+import { useClipboard, useOllamaModels, useHistory } from '../hooks'
 import { useToastContext } from '../providers/ToastProvider'
 import { useI18n } from '../providers/I18nProvider'
 import { useTheme } from '../providers/ThemeProvider'
 import { MarkdownMessage } from './MarkdownMessage'
 import type { ChatMessage, Prompt } from '@/types'
+import { STORAGE_KEYS } from '@/constants'
 import '../tools.css'
 import '../prompt/prompt.css'
 import './chat.css'
@@ -38,6 +39,28 @@ export default function ChatPage() {
     const { selectedModel, models, isLoading: loadingModels, setSelectedModel } = useOllamaModels()
     const { isDarkMode } = useTheme()
 
+    // Load messages from localStorage on mount
+    useEffect(() => {
+        const saved = localStorage.getItem(STORAGE_KEYS.CHAT_HISTORY)
+        if (saved) {
+            try {
+                const parsed = JSON.parse(saved)
+                if (Array.isArray(parsed)) {
+                    setMessages(parsed)
+                }
+            } catch (e) {
+                console.error('Failed to load chat history:', e)
+            }
+        }
+    }, [])
+
+    // Save messages to localStorage whenever they change
+    useEffect(() => {
+        if (messages.length > 0) {
+            localStorage.setItem(STORAGE_KEYS.CHAT_HISTORY, JSON.stringify(messages))
+        }
+    }, [messages])
+
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
     }, [messages])
@@ -56,6 +79,16 @@ export default function ChatPage() {
         setInput('')
         setLoading(true)
 
+        // Create placeholder for assistant message
+        const assistantId = (Date.now() + 1).toString()
+        const assistantMessage: ChatMessage = {
+            id: assistantId,
+            role: 'assistant',
+            content: '',
+            timestamp: Date.now()
+        }
+        setMessages(prev => [...prev, assistantMessage])
+
         try {
             const response = await fetch(`${API_BASE}/ollama/chat`, {
                 method: 'POST',
@@ -63,7 +96,8 @@ export default function ChatPage() {
                 body: JSON.stringify({
                     message: content.trim(),
                     model: selectedModel,
-                    messages: messages
+                    messages: messages,
+                    stream: true
                 })
             })
 
@@ -71,25 +105,49 @@ export default function ChatPage() {
                 throw new Error('Failed to get response from AI')
             }
 
-            const data = await response.json()
+            // Handle streaming response
+            const reader = response.body?.getReader()
+            const decoder = new TextDecoder()
 
-            if (data.success && data.response) {
-                const assistantMessage: ChatMessage = {
-                    id: (Date.now() + 1).toString(),
-                    role: 'assistant',
-                    content: data.response,
-                    timestamp: Date.now()
+            if (!reader) {
+                throw new Error('No response body')
+            }
+
+            let accumulatedContent = ''
+
+            while (true) {
+                const { done, value } = await reader.read()
+                if (done) break
+
+                const chunk = decoder.decode(value, { stream: true })
+                const lines = chunk.split('\n')
+
+                for (const line of lines) {
+                    if (line.startsWith('data: ')) {
+                        const data = line.slice(6)
+                        if (data === '[DONE]') {
+                            break
+                        }
+                        accumulatedContent += data
+                        // Update the assistant message in real-time
+                        setMessages(prev => prev.map(msg =>
+                            msg.id === assistantId
+                                ? { ...msg, content: accumulatedContent }
+                                : msg
+                        ))
+                    }
                 }
-                setMessages(prev => [...prev, assistantMessage])
-            } else {
-                throw new Error(data.error || 'Failed to get response')
+            }
+
+            if (!accumulatedContent) {
+                throw new Error('No response received')
             }
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : 'Failed to send message'
             toast.error(errorMessage)
 
             const errorMsg: ChatMessage = {
-                id: (Date.now() + 1).toString(),
+                id: (Date.now() + 2).toString(),
                 role: 'assistant',
                 content: `错误: ${errorMessage}`,
                 timestamp: Date.now()
@@ -121,6 +179,7 @@ export default function ChatPage() {
     const clearChat = () => {
         if (messages.length > 0 && confirm('确定要清空对话历史吗？')) {
             setMessages([])
+            localStorage.removeItem(STORAGE_KEYS.CHAT_HISTORY)
         }
     }
 

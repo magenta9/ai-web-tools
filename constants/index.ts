@@ -47,6 +47,7 @@ export const STORAGE_KEYS = {
     JSONFIX_HISTORY: 'jsonfix_history',
     DIFF_HISTORY: 'diff_history',
     TRANSLATE_HISTORY: 'translate_history',
+    CHAT_HISTORY: 'chat_history',
     THEME: 'theme',
     LOCALE: 'locale',
 } as const

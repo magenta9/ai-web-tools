@@ -251,6 +251,12 @@ func (h *DBHandler) openDB(cfg *dbConfig) (*sql.DB, error) {
 		}
 	}
 
+	// Fix for Docker: localhost refers to the container, use host.docker.internal to access host machine
+	host := cfg.Host
+	if host == "localhost" || host == "127.0.0.1" {
+		host = "host.docker.internal"
+	}
+
 	dbType := cfg.Type
 	if dbType == "" {
 		dbType = "mysql"
@@ -258,12 +264,12 @@ func (h *DBHandler) openDB(cfg *dbConfig) (*sql.DB, error) {
 
 	if dbType == "postgres" {
 		dsn := fmt.Sprintf("postgres://%s:%s@%s:%d/%s?sslmode=disable",
-			cfg.User, cfg.Password, cfg.Host, port, cfg.Database)
+			cfg.User, cfg.Password, host, port, cfg.Database)
 		return sql.Open("postgres", dsn)
 	}
 
 	// MySQL
-	dsn := fmt.Sprintf("%s:%s@tcp(%s:%d)/", cfg.User, cfg.Password, cfg.Host, port)
+	dsn := fmt.Sprintf("%s:%s@tcp(%s:%d)/", cfg.User, cfg.Password, host, port)
 	if cfg.Database != "" {
 		dsn += cfg.Database
 	}
