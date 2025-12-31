@@ -1,0 +1,55 @@
+# Database Migration Workflow
+# Manual trigger for database migration commands
+name: Database Migration
+
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: 'Migration action'
+        required: true
+        default: 'status'
+        type: choice
+        options:
+        - up
+        - status
+        - version
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+    - name: Run Database Migration
+      uses: appleboy/ssh-action@v1.0.3
+      with:
+        host: ${{ secrets.REMOTE_HOST }}
+        username: ${{ secrets.REMOTE_USERNAME }}
+        key: ${{ secrets.REMOTE_SSH_KEY }}
+        port: ${{ secrets.REMOTE_SSH_PORT }}
+        script: |
+          echo "=== Database Migration: ${{ github.event.inputs.action }} ==="
+          
+          # Check if container is running
+          if ! docker ps | grep -q webtools-server; then
+            echo "Error: webtools-server container is not running"
+            exit 1
+          fi
+          
+          case "${{ github.event.inputs.action }}" in
+            up)
+              echo "Running migrations..."
+              docker exec webtools-server ./server migrate -action=up
+              echo ""
+              echo "Migration completed. Current status:"
+              docker exec webtools-server ./server migrate -action=status
+              ;;
+            status)
+              echo "Checking migration status..."
+              docker exec webtools-server ./server migrate -action=status
+              ;;
+            version)
+              echo "Current schema version:"
+              docker exec webtools-server ./server migrate -action=version
+              ;;
+          esac
