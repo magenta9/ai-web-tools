@@ -16,6 +16,7 @@ bun.lockb
 
 # misc
 .DS_Store
+.env
 .env.local
 .env.development.local
 .env.test.local
@@ -36,5 +37,6 @@ Thumbs.db
 
 # Go binaries
 server-go/bin/
+server-go/.env
 
 .playwright-mcp
