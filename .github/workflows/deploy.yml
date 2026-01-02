@@ -54,6 +54,8 @@ jobs:
           provenance: false
           pull: true
           no-cache: true
+          cache-from: ""
+          cache-to: ""
 
   build-and-push-server:
     runs-on: ubuntu-latest
@@ -97,6 +99,8 @@ jobs:
           provenance: false
           pull: true
           no-cache: true
+          cache-from: ""
+          cache-to: ""
 
   deploy:
     needs: [build-and-push-app, build-and-push-server]
