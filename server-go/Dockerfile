@@ -14,6 +14,9 @@ COPY --from=builder /app/server .
 COPY --from=builder /app/migrations ./migrations
 COPY --from=builder /app/config ./config
 
+# 验证配置文件是否存在
+RUN ls -la /app/config/ || echo "Config directory not found"
+
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
   CMD wget --no-verbose --tries=1 --spider http://localhost:3001/api/health || exit 1
