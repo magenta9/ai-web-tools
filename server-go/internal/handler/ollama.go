@@ -1,23 +1,25 @@
 package handler
 
 import (
-	"bufio"
-	"bytes"
 	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"github.com/magenta9/ai-web-tools/server/internal/config"
+	"github.com/magenta9/ai-web-tools/server/internal/llm"
 )
 
 type OllamaHandler struct {
-	host string
+	host     string
+	provider llm.LLMProvider
 }
 
 func NewOllamaHandler(cfg *config.Config) *OllamaHandler {
-	return &OllamaHandler{host: cfg.OllamaHost}
+	return &OllamaHandler{
+		host:     cfg.OllamaHost,
+		provider: llm.NewProvider(cfg),
+	}
 }
 
 type OllamaModel struct {
@@ -101,10 +103,10 @@ Write only the SQL query, nothing else. Do not include markdown code blocks.`, r
 
 	model := req.Model
 	if model == "" {
-		model = "llama3.2"
+		model = "claude-3-5-sonnet-20241022"
 	}
 
-	result, err := h.generate(fullPrompt, model)
+	result, err := h.provider.Generate(fullPrompt, model)
 	if err != nil {
 		c.JSON(500, gin.H{"success": false, "error": err.Error()})
 		return
@@ -131,44 +133,33 @@ func (h *OllamaHandler) Chat(c *gin.Context) {
 
 	model := req.Model
 	if model == "" {
-		// Try to get the first available model as fallback
-		model = h.getFirstAvailableModel()
-		if model == "" {
-			model = "llama3.2" // Keep as last resort
-		}
+		model = "claude-3-5-sonnet-20241022"
 	}
 
-	// Build messages array for Ollama
-	messages := []map[string]any{}
+	// Build messages array
+	messages := []llm.Message{}
 	if len(req.Messages) > 0 {
 		for _, msg := range req.Messages {
-			messages = append(messages, map[string]any{
-				"role":    msg.Role,
-				"content": msg.Content,
+			messages = append(messages, llm.Message{
+				Role:    msg.Role,
+				Content: msg.Content,
 			})
 		}
 	}
 	// Append current message
-	messages = append(messages, map[string]any{
-		"role":    "user",
-		"content": req.Message,
+	messages = append(messages, llm.Message{
+		Role:    "user",
+		Content: req.Message,
 	})
 
-	// Handle streaming if requested
+	// Handle streaming if requested (暂时不支持，直接返回非流式)
 	if req.Stream {
-		h.streamChat(c, messages, model)
+		c.JSON(400, gin.H{"success": false, "error": "Streaming not supported yet"})
 		return
 	}
 
 	// Non-streaming response
-	var result string
-	var err error
-	if len(req.Messages) > 0 {
-		result, err = h.chatWithHistory(messages, model)
-	} else {
-		result, err = h.generate(req.Message, model)
-	}
-
+	result, err := h.provider.Chat(messages, model)
 	if err != nil {
 		c.JSON(500, gin.H{"success": false, "error": err.Error()})
 		return
@@ -226,150 +217,14 @@ Translation:`, srcLang, tgtLang, styleInstr, req.Text)
 
 	model := req.Model
 	if model == "" {
-		model = "llama3.2"
+		model = "claude-3-5-sonnet-20241022"
 	}
 
-	result, err := h.generate(prompt, model)
+	result, err := h.provider.Generate(prompt, model)
 	if err != nil {
 		c.JSON(500, gin.H{"success": false, "error": err.Error()})
 		return
 	}
 
 	c.JSON(200, gin.H{"success": true, "translation": result})
-}
-
-func (h *OllamaHandler) generate(prompt, model string) (string, error) {
-	body, _ := json.Marshal(map[string]any{
-		"model":  model,
-		"prompt": prompt,
-		"stream": false,
-		"options": map[string]any{
-			"temperature": 0.1,
-			"num_predict": 2000,
-		},
-	})
-
-	resp, err := http.Post(h.host+"/api/generate", "application/json", bytes.NewReader(body))
-	if err != nil {
-		return "", err
-	}
-	defer resp.Body.Close()
-
-	data, _ := io.ReadAll(resp.Body)
-	var result map[string]any
-	json.Unmarshal(data, &result)
-
-	if response, ok := result["response"].(string); ok {
-		return response, nil
-	}
-	return "", fmt.Errorf("invalid response from Ollama")
-}
-
-func (h *OllamaHandler) chatWithHistory(messages []map[string]any, model string) (string, error) {
-	body, _ := json.Marshal(map[string]any{
-		"model":    model,
-		"messages": messages,
-		"stream":   false,
-		"options": map[string]any{
-			"temperature": 0.7,
-			"num_predict": 2000,
-		},
-	})
-
-	resp, err := http.Post(h.host+"/api/chat", "application/json", bytes.NewReader(body))
-	if err != nil {
-		return "", err
-	}
-	defer resp.Body.Close()
-
-	data, _ := io.ReadAll(resp.Body)
-	var result map[string]any
-	json.Unmarshal(data, &result)
-
-	if message, ok := result["message"].(map[string]any); ok {
-		if content, ok := message["content"].(string); ok {
-			return content, nil
-		}
-	}
-	return "", fmt.Errorf("invalid response from Ollama chat")
-}
-
-func (h *OllamaHandler) getFirstAvailableModel() string {
-	resp, err := http.Get(h.host + "/api/tags")
-	if err != nil {
-		return ""
-	}
-	defer resp.Body.Close()
-
-	var result map[string]any
-	json.NewDecoder(resp.Body).Decode(&result)
-
-	if modelList, ok := result["models"].([]any); ok && len(modelList) > 0 {
-		if mm, ok := modelList[0].(map[string]any); ok {
-			if name, ok := mm["name"].(string); ok {
-				return name
-			}
-		}
-	}
-	return ""
-}
-
-func (h *OllamaHandler) streamChat(c *gin.Context, messages []map[string]any, model string) {
-	body, _ := json.Marshal(map[string]any{
-		"model":    model,
-		"messages": messages,
-		"stream":   true,
-		"options": map[string]any{
-			"temperature": 0.7,
-			"num_predict": 2000,
-		},
-	})
-
-	resp, err := http.Post(h.host+"/api/chat", "application/json", bytes.NewReader(body))
-	if err != nil {
-		c.JSON(500, gin.H{"success": false, "error": err.Error()})
-		return
-	}
-	defer resp.Body.Close()
-
-	// Set headers for SSE
-	c.Header("Content-Type", "text/event-stream")
-	c.Header("Cache-Control", "no-cache")
-	c.Header("Connection", "keep-alive")
-	c.Header("X-Accel-Buffering", "no")
-
-	flusher, ok := c.Writer.(http.Flusher)
-	if !ok {
-		c.JSON(500, gin.H{"success": false, "error": "Streaming not supported"})
-		return
-	}
-
-	scanner := bufio.NewScanner(resp.Body)
-	for scanner.Scan() {
-		line := scanner.Bytes()
-		if len(line) == 0 {
-			continue
-		}
-
-		var chunk map[string]any
-		if err := json.Unmarshal(line, &chunk); err != nil {
-			continue
-		}
-
-		// Extract message content
-		if message, ok := chunk["message"].(map[string]any); ok {
-			if content, ok := message["content"].(string); ok && content != "" {
-				// Send as SSE
-				c.Writer.WriteString(fmt.Sprintf("data: %s\n\n", content))
-				flusher.Flush()
-			}
-		}
-
-		// Check if done
-		if done, ok := chunk["done"].(bool); ok && done {
-			c.Writer.WriteString("data: [DONE]\n\n")
-			flusher.Flush()
-			break
-		}
-	}
 }
