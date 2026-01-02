@@ -46,6 +46,7 @@ jobs:
           tags: ${{ steps.meta-app.outputs.tags }}
           load: false
           provenance: false
+          no-cache: true
 
       - name: Extract metadata for server
         id: meta-server
@@ -65,6 +66,7 @@ jobs:
           tags: ${{ steps.meta-server.outputs.tags }}
           load: false
           provenance: false
+          no-cache: true
 
   deploy:
     needs: build-and-push
