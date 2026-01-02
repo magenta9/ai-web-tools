@@ -78,7 +78,8 @@ func (h *ModelHandler) loadModelsConfig() {
 				{ID: "gpt-4o-mini", Name: "GPT-4o Mini", Description: "Faster and cheaper", ContextLength: 128000},
 			},
 			Anthropic: []ModelInfo{
-				{ID: "claude-3-5-sonnet-20241022", Name: "Claude 3.5 Sonnet", Description: "Most intelligent", ContextLength: 200000},
+				{ID: "glm-4.7", Name: "GLM-4.7", Description: "Advanced language model", ContextLength: 200000},
+				{ID: "glm-4.6", Name: "GLM-4.6", Description: "Efficient language model", ContextLength: 128000},
 			},
 		}
 		return
