@@ -78,10 +78,8 @@ jobs:
 
             cd /opt/webtools || mkdir -p /opt/webtools && cd /opt/webtools
 
-            if [ ! -f "docker-compose.deploy.yml" ]; then
-              echo "Downloading docker-compose.deploy.yml..."
-              curl -sL https://raw.githubusercontent.com/${{ github.repository }}/main/docker-compose.deploy.yml -o docker-compose.deploy.yml
-            fi
+            echo "Downloading latest docker-compose.deploy.yml..."
+            curl -sL https://raw.githubusercontent.com/${{ github.repository }}/main/docker-compose.deploy.yml -o docker-compose.deploy.yml
 
             mkdir -p config
 
