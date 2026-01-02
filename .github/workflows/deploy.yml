@@ -20,10 +20,6 @@ jobs:
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
-        with:
-          driver-opts: |
-            image=moby/buildkit:latest:rootless
-          install: true
 
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v3
@@ -50,9 +46,6 @@ jobs:
           tags: ${{ steps.meta-app.outputs.tags }}
           load: false
           provenance: false
-          no-cache: true
-          cache-from: []
-          cache-to: mode=max
 
       - name: Extract metadata for server
         id: meta-server
@@ -72,9 +65,6 @@ jobs:
           tags: ${{ steps.meta-server.outputs.tags }}
           load: false
           provenance: false
-          no-cache: true
-          cache-from: []
-          cache-to: mode=max
 
   deploy:
     needs: build-and-push
@@ -99,19 +89,15 @@ jobs:
           script: |
             echo "=== Deploying to Server ==="
 
-            # Navigate to project directory
             cd /opt/webtools || mkdir -p /opt/webtools && cd /opt/webtools
 
-            # Copy docker-compose.deploy.yml if not exists
             if [ ! -f "docker-compose.deploy.yml" ]; then
               echo "Downloading docker-compose.deploy.yml..."
-              curl -sL https://raw.githubusercontent.com/$${{ github.repository }}/main/docker-compose.deploy.yml -o docker-compose.deploy.yml
+              curl -sL https://raw.githubusercontent.com/${{ github.repository }}/main/docker-compose.deploy.yml -o docker-compose.deploy.yml
             fi
 
-            # Create config directory if not exists
             mkdir -p config
 
-            # Create .env if not exists
             if [ ! -f ".env" ]; then
               echo "Creating .env file..."
               echo "DB_USER=webtools" >> .env
@@ -119,22 +105,16 @@ jobs:
               echo "DB_NAME=webtools" >> .env
               echo "OLLAMA_HOST=http://\$\$host.docker.internal:11434" >> .env
               echo "API_URL=http://8.217.117.65:3001/api" >> .env
-              echo "Please configure .env with production values"
             fi
 
-            # Pull latest images
             echo "Pulling latest images..."
             docker compose -f docker-compose.deploy.yml pull
 
-            # Restart services
             echo "Restarting services..."
             docker compose -f docker-compose.deploy.yml up -d
 
-            # Wait for services to be healthy
-            echo "Waiting for services to be healthy..."
             sleep 15
 
-            # Health check
             if curl -sf http://localhost:3000 > /dev/null; then
               echo "Deployment successful!"
               docker compose -f docker-compose.deploy.yml ps
