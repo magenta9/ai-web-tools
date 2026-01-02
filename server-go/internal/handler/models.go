@@ -2,6 +2,7 @@ package handler
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"os"
 
@@ -62,15 +63,19 @@ func (h *ModelHandler) loadModelsConfig() {
 
 	var data []byte
 	var err error
+	var foundPath string
 
 	for _, path := range paths {
 		data, err = os.ReadFile(path)
 		if err == nil {
+			foundPath = path
 			break
 		}
 	}
 
 	if err != nil {
+		// Log which paths were tried
+		fmt.Printf("Failed to load models.json from any path: %v\n", paths)
 		// Use default config if file not found
 		h.modelsConfig = &ModelsConfig{
 			OpenAI: []ModelInfo{
@@ -85,9 +90,12 @@ func (h *ModelHandler) loadModelsConfig() {
 		return
 	}
 
+	fmt.Printf("Successfully loaded models.json from: %s\n", foundPath)
 	var cfg ModelsConfig
 	if err := json.Unmarshal(data, &cfg); err == nil {
 		h.modelsConfig = &cfg
+	} else {
+		fmt.Printf("Failed to parse models.json: %v\n", err)
 	}
 }
 
