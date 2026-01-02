@@ -12,6 +12,7 @@ RUN apk --no-cache add ca-certificates tzdata wget
 ENV TZ=Asia/Shanghai
 COPY --from=builder /app/server .
 COPY --from=builder /app/migrations ./migrations
+COPY --from=builder /app/config ./config
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
