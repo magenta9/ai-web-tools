@@ -152,9 +152,40 @@ func (h *OllamaHandler) Chat(c *gin.Context) {
 		Content: req.Message,
 	})
 
-	// Handle streaming if requested (暂时不支持，直接返回非流式)
+	// Handle streaming if requested
 	if req.Stream {
-		c.JSON(400, gin.H{"success": false, "error": "Streaming not supported yet"})
+		// 设置流式响应头
+		c.Header("Content-Type", "text/plain; charset=utf-8")
+		c.Header("Cache-Control", "no-cache")
+		c.Header("Connection", "keep-alive")
+		c.Header("Access-Control-Allow-Origin", "*")
+		
+		// 立即发送头部
+		c.Status(200)
+		
+		// 流式回调函数
+		callback := func(chunk string) error {
+			// 发送数据块
+			_, err := c.Writer.WriteString("data: " + chunk + "\n")
+			if err != nil {
+				return err
+			}
+			c.Writer.Flush()
+			return nil
+		}
+		
+		// 调用流式聊天
+		err := h.provider.ChatStream(messages, model, callback)
+		if err != nil {
+			// 发送错误信息
+			c.Writer.WriteString("data: [ERROR] " + err.Error() + "\n")
+			c.Writer.Flush()
+			return
+		}
+		
+		// 发送结束标记
+		c.Writer.WriteString("data: [DONE]\n")
+		c.Writer.Flush()
 		return
 	}
 

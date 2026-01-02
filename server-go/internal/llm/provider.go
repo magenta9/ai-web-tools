@@ -19,9 +19,13 @@ type Message struct {
 	Content string `json:"content"`
 }
 
+// StreamCallback 流式响应回调函数
+type StreamCallback func(chunk string) error
+
 // LLMProvider 统一的LLM接口
 type LLMProvider interface {
 	Chat(messages []Message, model string) (string, error)
+	ChatStream(messages []Message, model string, callback StreamCallback) error
 	Generate(prompt string, model string) (string, error)
 	GetProviderType() ProviderType
 }

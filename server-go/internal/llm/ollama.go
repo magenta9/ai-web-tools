@@ -77,6 +77,11 @@ func (p *OllamaProvider) Chat(messages []Message, model string) (string, error) 
 	return "", fmt.Errorf("invalid response format")
 }
 
+func (p *OllamaProvider) ChatStream(messages []Message, model string, callback StreamCallback) error {
+	// TODO: 实现 Ollama 流式响应
+	return fmt.Errorf("streaming not implemented for Ollama provider")
+}
+
 func (p *OllamaProvider) Generate(prompt string, model string) (string, error) {
 	if model == "" {
 		model = "llama3.2"

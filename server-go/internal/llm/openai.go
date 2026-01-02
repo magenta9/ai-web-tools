@@ -31,6 +31,11 @@ func (p *OpenAIProvider) Chat(messages []Message, model string) (string, error) 
 	return "", fmt.Errorf("OpenAI provider not implemented yet")
 }
 
+func (p *OpenAIProvider) ChatStream(messages []Message, model string, callback StreamCallback) error {
+	// TODO: 实现OpenAI流式响应
+	return fmt.Errorf("streaming not implemented for OpenAI provider")
+}
+
 func (p *OpenAIProvider) Generate(prompt string, model string) (string, error) {
 	// TODO: 实现OpenAI API调用
 	return "", fmt.Errorf("OpenAI provider not implemented yet")
