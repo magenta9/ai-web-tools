@@ -95,7 +95,7 @@ jobs:
             # Copy docker-compose.deploy.yml if not exists
             if [ ! -f "docker-compose.deploy.yml" ]; then
               echo "Downloading docker-compose.deploy.yml..."
-              curl -sL https://raw.githubusercontent.com/${{ github.repository }}/main/docker-compose.deploy.yml -o docker-compose.deploy.yml
+              curl -sL https://raw.githubusercontent.com/$${{ github.repository }}/main/docker-compose.deploy.yml -o docker-compose.deploy.yml
             fi
 
             # Create config directory if not exists
