@@ -2,15 +2,21 @@
 FROM node:20-alpine AS builder
 WORKDIR /app
 
+# Install bun
+RUN apk add --no-cache curl && \
+    curl -fsSL https://bun.sh/install | bash
+
+# Copy files
+COPY package.json bun.lock ./
+
 # Install dependencies
-COPY package.json package-lock.json ./
-RUN npm install
+RUN /root/.bun/bin/bun install
 
 # Build the application (static export to /out)
 COPY . .
 ARG NEXT_PUBLIC_API_URL
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
-RUN npm run build
+RUN /root/.bun/bin/bun run build
 
 # Production stage - serve static files
 FROM node:20-alpine AS runner
