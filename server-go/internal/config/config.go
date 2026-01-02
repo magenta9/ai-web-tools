@@ -24,7 +24,6 @@ type Config struct {
 	OpenAIBaseURL    string
 	AnthropicAPIKey  string
 	AnthropicBaseURL string
-	AnthropicModel   string
 
 	// Migration settings
 	MigrationAuto bool
@@ -47,7 +46,6 @@ func Load() *Config {
 		OpenAIBaseURL:   getEnv("OPENAI_BASE_URL", "https://api.openai.com/v1"),
 		AnthropicAPIKey:  getEnv("ANTHROPIC_API_KEY", ""),
 		AnthropicBaseURL: getEnv("ANTHROPIC_BASE_URL", "https://api.anthropic.com"),
-		AnthropicModel:   getEnv("ANTHROPIC_MODEL", "claude-3-5-sonnet-20241022"),
 		MigrationAuto:   getEnvBool("DB_MIGRATION_AUTO", true),
 		SchemaVersion:   getEnvInt("DB_SCHEMA_VERSION", 3),
 	}

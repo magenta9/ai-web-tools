@@ -37,6 +37,7 @@ Thumbs.db
 
 # Go binaries
 server-go/bin/
+server-go/server
 server-go/.env
 
 .playwright-mcp

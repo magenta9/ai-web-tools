@@ -33,7 +33,7 @@ export function ModelSelector({
     onModelChange,
     className = 'header-model-select',
     disabled = false,
-    defaultModel = 'claude-3-5-sonnet-20241022'
+    defaultModel = 'glm-4.7'
 }: ModelSelectorProps) {
     return (
         <select

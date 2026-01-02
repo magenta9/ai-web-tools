@@ -46,7 +46,7 @@ export interface UseOllamaModelsReturn {
 export function useOllamaModels(
     options: UseOllamaModelsOptions = {}
 ): UseOllamaModelsReturn {
-    const { defaultModel = 'claude-3-5-sonnet-20241022', autoLoad = true } = options
+    const { defaultModel = 'glm-4.7', autoLoad = true } = options
 
     const [models, setModels] = useState<OllamaModel[]>([])
     const [selectedModel, setSelectedModel] = useState(defaultModel)
