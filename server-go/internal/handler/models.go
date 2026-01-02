@@ -113,14 +113,37 @@ func (h *ModelHandler) GetAllModels(c *gin.Context) {
 
 	// Get Anthropic models (from config)
 	if h.cfg.AnthropicAPIKey != "" {
-		for _, m := range h.modelsConfig.Anthropic {
+		// Use configured model if available
+		if h.cfg.AnthropicModel != "" {
+			modelName := h.cfg.AnthropicModel
+			displayName := modelName
+			
+			// Map model names to display names
+			switch modelName {
+			case "glm-4.7":
+				displayName = "GLM-4.7"
+			case "claude-3-5-sonnet-20241022":
+				displayName = "Claude 3.5 Sonnet"
+			}
+			
 			allModels = append(allModels, Model{
-				ID:            m.ID,
-				Name:          m.Name,
+				ID:            modelName,
+				Name:          displayName,
 				Provider:      "anthropic",
-				Description:   m.Description,
-				ContextLength: m.ContextLength,
+				Description:   "AI Language Model",
+				ContextLength: 200000,
 			})
+		} else {
+			// Fallback to config file models
+			for _, m := range h.modelsConfig.Anthropic {
+				allModels = append(allModels, Model{
+					ID:            m.ID,
+					Name:          m.Name,
+					Provider:      "anthropic",
+					Description:   m.Description,
+					ContextLength: m.ContextLength,
+				})
+			}
 		}
 	}
 
@@ -152,14 +175,37 @@ func (h *ModelHandler) GetModelsByProvider(c *gin.Context) {
 		}
 	case "anthropic":
 		if h.cfg.AnthropicAPIKey != "" {
-			for _, m := range h.modelsConfig.Anthropic {
+			// Use configured model if available
+			if h.cfg.AnthropicModel != "" {
+				modelName := h.cfg.AnthropicModel
+				displayName := modelName
+				
+				// Map model names to display names
+				switch modelName {
+				case "glm-4.7":
+					displayName = "GLM-4.7"
+				case "claude-3-5-sonnet-20241022":
+					displayName = "Claude 3.5 Sonnet"
+				}
+				
 				models = append(models, Model{
-					ID:            m.ID,
-					Name:          m.Name,
+					ID:            modelName,
+					Name:          displayName,
 					Provider:      "anthropic",
-					Description:   m.Description,
-					ContextLength: m.ContextLength,
+					Description:   "AI Language Model",
+					ContextLength: 200000,
 				})
+			} else {
+				// Fallback to config file models
+				for _, m := range h.modelsConfig.Anthropic {
+					models = append(models, Model{
+						ID:            m.ID,
+						Name:          m.Name,
+						Provider:      "anthropic",
+						Description:   m.Description,
+						ContextLength: m.ContextLength,
+					})
+				}
 			}
 		}
 	default:
