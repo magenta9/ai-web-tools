@@ -1,0 +1,79 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: webtools-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${DB_USER:-webtools}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-webtools123}
+      POSTGRES_DB: ${DB_NAME:-webtools}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-webtools}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - webtools-network
+
+  server:
+    image: ghcr.io/${IMAGE_PREFIX:-zhangcheng}/ai-web-tools-server:latest
+    container_name: webtools-server
+    restart: unless-stopped
+    ports:
+      - "3001:3001"
+    environment:
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USER=${DB_USER:-webtools}
+      - DB_PASSWORD=${DB_PASSWORD:-webtools123}
+      - DB_NAME=${DB_NAME:-webtools}
+      - OLLAMA_HOST=${OLLAMA_HOST:-http://host.docker.internal:11434}
+      - OLLAMA_API_KEY=${OLLAMA_API_KEY:-}
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - OPENAI_BASE_URL=${OPENAI_BASE_URL:-}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+      - ANTHROPIC_BASE_URL=${ANTHROPIC_BASE_URL:-}
+      - API_PORT=3001
+      - DB_MIGRATION_AUTO=true
+    volumes:
+      - ./config:/app/config
+    depends_on:
+      postgres:
+        condition: service_healthy
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - webtools-network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3001/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  app:
+    image: ghcr.io/${IMAGE_PREFIX:-zhangcheng}/ai-web-tools-app:latest
+    container_name: webtools-app
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=${API_URL:-http://8.217.117.65:3001/api}
+      - PORT=3000
+    depends_on:
+      server:
+        condition: service_healthy
+    networks:
+      - webtools-network
+
+volumes:
+  pgdata:
+    driver: local
+
+networks:
+  webtools-network:
+    driver: bridge

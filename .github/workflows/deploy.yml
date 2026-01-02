@@ -1,6 +1,6 @@
-# Deploy to Server Workflow
-# Pulls code to server and builds locally
-name: Deploy to Server
+# Build and Deploy to Server Workflow
+# Builds Docker images and pushes to GHCR, server just pulls and runs
+name: Build & Deploy
 
 on:
   push:
@@ -9,78 +9,137 @@ on:
 
 permissions:
   contents: read
+  packages: write
 
 jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata for app
+        id: meta-app
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository }}-app
+          tags: |
+            type=sha
+            type=ref,event=branch
+
+      - name: Build and push app
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: Dockerfile
+          push: true
+          tags: ${{ steps.meta-app.outputs.tags }}
+          load: false
+          provenance: false
+
+      - name: Extract metadata for server
+        id: meta-server
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository }}-server
+          tags: |
+            type=sha
+            type=ref,event=branch
+
+      - name: Build and push server
+        uses: docker/build-push-action@v5
+        with:
+          context: ./server-go
+          file: Dockerfile
+          push: true
+          tags: ${{ steps.meta-server.outputs.tags }}
+          load: false
+          provenance: false
+
   deploy:
+    needs: build-and-push
     runs-on: ubuntu-latest
     environment:
       name: production
     steps:
-    - name: Deploy to Server via SSH
-      uses: appleboy/ssh-action@v1.0.3
-      with:
-        host: ${{ secrets.REMOTE_HOST }}
-        username: ${{ secrets.REMOTE_USERNAME }}
-        key: ${{ secrets.REMOTE_SSH_KEY }}
-        port: ${{ secrets.REMOTE_SSH_PORT }}
-        script: |
-          echo "=== Deploying to Server ==="
-          
-          # Navigate to project directory
-          cd /opt/webtools || mkdir -p /opt/webtools && cd /opt/webtools
-          
-          # Clone or pull latest code
-          if [ -d "ai-web-tools" ]; then
-            echo "Updating existing repository..."
-            cd ai-web-tools
-            git pull origin main
-          else
-            echo "Cloning repository..."
-            git clone https://github.com/${{ github.repository }}.git ai-web-tools
-            cd ai-web-tools
-          fi
-          
-          # Copy environment file if not exists
-          if [ ! -f "server-go/.env" ]; then
-            echo "Creating .env file..."
-            cp server-go/.env.example server-go/.env
-            echo "⚠️  Please configure server-go/.env with production values"
-          fi
-          
-          # Build and start services
-          echo "Building and starting services..."
-          cd server-go
-          docker compose -f docker/docker-compose.prod.yml build
-          docker compose -f docker/docker-compose.prod.yml up -d
-          
-          # Wait for services to be healthy
-          echo "Waiting for services to be healthy..."
-          sleep 10
-          
-          # Health check
-          if curl -sf http://localhost:3001/api/health > /dev/null; then
-            echo "✅ Deployment successful!"
-            docker compose -f docker/docker-compose.prod.yml ps
-          else
-            echo "❌ Health check failed!"
-            docker compose -f docker/docker-compose.prod.yml logs --tail 50
-            exit 1
-          fi
-          
-          # Clean up old images
-          docker image prune -f
+      - name: Deploy to Server via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.REMOTE_HOST }}
+          username: ${{ secrets.REMOTE_USERNAME }}
+          key: ${{ secrets.REMOTE_SSH_KEY }}
+          port: ${{ secrets.REMOTE_SSH_PORT }}
+          script: |
+            echo "=== Deploying to Server ==="
 
-    - name: Verify Deployment
-      uses: appleboy/ssh-action@v1.0.3
-      with:
-        host: ${{ secrets.REMOTE_HOST }}
-        username: ${{ secrets.REMOTE_USERNAME }}
-        key: ${{ secrets.REMOTE_SSH_KEY }}
-        port: ${{ secrets.REMOTE_SSH_PORT }}
-        script: |
-          echo "=== Deployment Status ==="
-          cd /opt/webtools/ai-web-tools/server-go
-          docker compose -f docker/docker-compose.prod.yml ps
-          echo ""
-          echo "Recent logs:"
-          docker compose -f docker/docker-compose.prod.yml logs --tail 20
+            # Navigate to project directory
+            cd /opt/webtools || mkdir -p /opt/webtools && cd /opt/webtools
+
+            # Copy docker-compose.deploy.yml if not exists
+            if [ ! -f "docker-compose.deploy.yml" ]; then
+              echo "Downloading docker-compose.deploy.yml..."
+              curl -sL https://raw.githubusercontent.com/${{ github.repository }}/main/docker-compose.deploy.yml -o docker-compose.deploy.yml
+            fi
+
+            # Create config directory if not exists
+            mkdir -p config
+
+            # Create .env if not exists
+            if [ ! -f ".env" ]; then
+              echo "Creating .env file..."
+              cat > .env << 'EOF'
+DB_USER=webtools
+DB_PASSWORD=webtools123
+DB_NAME=webtools
+OLLAMA_HOST=http://host.docker.internal:11434
+API_URL=http://8.217.117.65:3001/api
+EOF
+              echo "Please configure .env with production values"
+            fi
+
+            # Pull latest images
+            echo "Pulling latest images..."
+            docker compose -f docker-compose.deploy.yml pull
+
+            # Restart services
+            echo "Restarting services..."
+            docker compose -f docker-compose.deploy.yml up -d
+
+            # Wait for services to be healthy
+            echo "Waiting for services to be healthy..."
+            sleep 15
+
+            # Health check
+            if curl -sf http://localhost:3000 > /dev/null; then
+              echo "Deployment successful!"
+              docker compose -f docker-compose.deploy.yml ps
+            else
+              echo "App health check failed, checking logs..."
+              docker compose -f docker-compose.deploy.yml logs --tail 30
+              exit 1
+            fi
+
+      - name: Verify Deployment
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.REMOTE_HOST }}
+          username: ${{ secrets.REMOTE_USERNAME }}
+          key: ${{ secrets.REMOTE_SSH_KEY }}
+          port: ${{ secrets.REMOTE_SSH_PORT }}
+          script: |
+            echo "=== Deployment Status ==="
+            cd /opt/webtools
+            docker compose -f docker-compose.deploy.yml ps
+            echo ""
+            echo "Recent logs:"
+            docker compose -f docker-compose.deploy.yml logs --tail 10
