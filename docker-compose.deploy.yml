@@ -63,7 +63,6 @@ services:
       - "3000:3000"
     environment:
       - NEXT_PUBLIC_API_URL=${API_URL:-http://8.217.117.65:3001/api}
-      - PORT=3000
     depends_on:
       server:
         condition: service_healthy
