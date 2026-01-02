@@ -60,8 +60,6 @@ services:
     restart: unless-stopped
     ports:
       - "3000:3000"
-    environment:
-      - NEXT_PUBLIC_API_URL=${API_URL:-http://8.217.117.65:3001/api}
     depends_on:
       - server
     networks:
