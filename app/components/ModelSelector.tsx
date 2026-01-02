@@ -33,7 +33,7 @@ export function ModelSelector({
     onModelChange,
     className = 'header-model-select',
     disabled = false,
-    defaultModel = 'llama3.2'
+    defaultModel = 'claude-3-5-sonnet-20241022'
 }: ModelSelectorProps) {
     return (
         <select
@@ -47,7 +47,7 @@ export function ModelSelector({
                 <option value={defaultModel}>{defaultModel}</option>
             )}
             {models.map((model) => (
-                <option key={model.name} value={model.name}>
+                <option key={model.id} value={model.id}>
                     {model.name}
                 </option>
             ))}

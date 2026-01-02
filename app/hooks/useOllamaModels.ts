@@ -4,9 +4,11 @@ import { useState, useEffect } from 'react'
 import { API_BASE } from '@/constants'
 
 export interface OllamaModel {
+    id: string
     name: string
-    size: number
-    modified_at: string
+    provider: string
+    description?: string
+    context_length?: number
 }
 
 export interface UseOllamaModelsOptions {
@@ -44,7 +46,7 @@ export interface UseOllamaModelsReturn {
 export function useOllamaModels(
     options: UseOllamaModelsOptions = {}
 ): UseOllamaModelsReturn {
-    const { defaultModel = 'llama3.2', autoLoad = true } = options
+    const { defaultModel = 'claude-3-5-sonnet-20241022', autoLoad = true } = options
 
     const [models, setModels] = useState<OllamaModel[]>([])
     const [selectedModel, setSelectedModel] = useState(defaultModel)
@@ -56,7 +58,7 @@ export function useOllamaModels(
         setError(null)
 
         try {
-            const res = await fetch(`${API_BASE}/ollama/models`)
+            const res = await fetch(`${API_BASE}/models`)
             const data = await res.json()
 
             if (data.success && data.models) {
@@ -65,10 +67,10 @@ export function useOllamaModels(
                 // Auto-select first available model if current selection is not available
                 if (data.models.length > 0) {
                     const currentModelAvailable = data.models.some(
-                        (m: OllamaModel) => m.name === selectedModel
+                        (m: OllamaModel) => m.id === selectedModel
                     )
                     if (!currentModelAvailable) {
-                        setSelectedModel(data.models[0].name)
+                        setSelectedModel(data.models[0].id)
                     }
                 }
             } else {
