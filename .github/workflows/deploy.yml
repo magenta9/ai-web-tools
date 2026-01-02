@@ -104,13 +104,11 @@ jobs:
             # Create .env if not exists
             if [ ! -f ".env" ]; then
               echo "Creating .env file..."
-              cat > .env << 'EOF'
-DB_USER=webtools
-DB_PASSWORD=webtools123
-DB_NAME=webtools
-OLLAMA_HOST=http://host.docker.internal:11434
-API_URL=http://8.217.117.65:3001/api
-EOF
+              echo "DB_USER=webtools" >> .env
+              echo "DB_PASSWORD=webtools123" >> .env
+              echo "DB_NAME=webtools" >> .env
+              echo "OLLAMA_HOST=http://\$\$host.docker.internal:11434" >> .env
+              echo "API_URL=http://8.217.117.65:3001/api" >> .env
               echo "Please configure .env with production values"
             fi
 
