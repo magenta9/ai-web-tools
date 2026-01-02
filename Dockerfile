@@ -28,4 +28,4 @@ COPY --from=builder /app/out ./
 EXPOSE 3000
 
 # Start the server
-CMD ["serve", "-p", "3000", "-s", "."]
+CMD ["serve", "-p", "3000", "."]
