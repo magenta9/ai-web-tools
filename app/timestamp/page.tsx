@@ -58,9 +58,15 @@ export default function TimestampConverter() {
     }
 
     try {
-      const num = parseInt(ts)
+      let num = parseInt(ts)
       if (isNaN(num)) {
         throw new Error(t.validation.invalidTimestamp)
+      }
+
+      // Auto-detect seconds vs milliseconds
+      // If 10 digits (or value < 100 billion), treat as seconds and multiply by 1000
+      if (Math.abs(num) < 100000000000) {
+        num *= 1000
       }
 
       const dateObj = new Date(num)
