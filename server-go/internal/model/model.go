@@ -25,3 +25,10 @@ type Prompt struct {
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
 }
+
+type SystemStat struct {
+	ID          int64     `json:"id"`
+	CPUPercent  float64   `json:"cpu_percent"`
+	MemoryUsage float64   `json:"memory_usage"`
+	CreatedAt   time.Time `json:"created_at"`
+}

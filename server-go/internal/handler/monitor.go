@@ -1,13 +1,11 @@
 package handler
 
 import (
-	"fmt"
 	"net/http"
-	"os"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/magenta9/ai-web-tools/server/internal/repository"
-	"github.com/shirou/gopsutil/v3/process"
 )
 
 type MonitorHandler struct {
@@ -37,28 +35,18 @@ func (h *MonitorHandler) GetStats(c *gin.Context) {
 		return
 	}
 
-	// 2. Get process stats
-	pid := int32(os.Getpid())
-	proc, err := process.NewProcess(pid)
+	// 2. Get history stats from DB
+	limitStr := c.DefaultQuery("limit", "360") // Default to 1 hour (360 * 10s)
+	limit, err := strconv.Atoi(limitStr)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Failed to get process: %v", err)})
+		limit = 360
+	}
+
+	stats, err := h.repo.GetSystemStats(c.Request.Context(), limit)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch stats"})
 		return
 	}
 
-	cpuPercent, err := proc.CPUPercent()
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Failed to get CPU percent: %v", err)})
-		return
-	}
-
-	memInfo, err := proc.MemoryInfo()
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Failed to get memory info: %v", err)})
-		return
-	}
-
-	c.JSON(http.StatusOK, gin.H{
-		"cpu_percent":  cpuPercent,
-		"memory_usage": float64(memInfo.RSS) / 1024 / 1024, // Convert to MB
-	})
+	c.JSON(http.StatusOK, stats)
 }

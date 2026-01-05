@@ -15,6 +15,7 @@ import (
 	"github.com/magenta9/ai-web-tools/server/internal/middleware"
 	"github.com/magenta9/ai-web-tools/server/internal/migration"
 	"github.com/magenta9/ai-web-tools/server/internal/repository"
+	"github.com/magenta9/ai-web-tools/server/internal/service"
 )
 
 func main() {
@@ -60,6 +61,9 @@ func main() {
 		promptH = handler.NewPromptHandler(repo)
 		authH = handler.NewAuthHandler(repo)
 		monitorH = handler.NewMonitorHandler(repo)
+
+		// Start background monitor service
+		service.StartMonitor(repo)
 	}
 
 	// Router

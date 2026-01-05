@@ -266,3 +266,52 @@ func (r *Repository) GetAllTags(ctx context.Context) ([]string, error) {
 	}
 	return tags, nil
 }
+
+// System Stats methods
+func (r *Repository) CreateSystemStat(ctx context.Context, stat *model.SystemStat) error {
+	_, err := r.pool.Exec(ctx,
+		`INSERT INTO system_stats (cpu_percent, memory_usage, created_at) VALUES ($1, $2, NOW())`,
+		stat.CPUPercent, stat.MemoryUsage)
+	return err
+}
+
+func (r *Repository) GetSystemStats(ctx context.Context, limit int) ([]model.SystemStat, error) {
+	if limit <= 0 {
+		limit = 360 // Default to 1 hour (assuming 10s interval)
+	}
+
+	rows, err := r.pool.Query(ctx,
+		`SELECT id, cpu_percent, memory_usage, created_at FROM system_stats ORDER BY created_at ASC LIMIT $1`,
+		limit) // Note: We select ASC (oldest first) for charting, but usually limit applies to last N.
+               // Correct logic: Subquery to get last N desc, then order ASC.
+
+	// Actually, let's just get DESC and reverse in code or frontend if needed,
+	// or use a subquery. Let's use DESC for simple limit logic.
+	// "SELECT ... ORDER BY created_at DESC LIMIT $1" gives last N.
+
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	// But wait, the previous query had an issue. Let's do a proper subquery to get oldest first among the last N.
+	query := `SELECT id, cpu_percent, memory_usage, created_at FROM (
+		SELECT id, cpu_percent, memory_usage, created_at FROM system_stats ORDER BY created_at DESC LIMIT $1
+	) sub ORDER BY created_at ASC`
+
+	rows, err = r.pool.Query(ctx, query, limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var results []model.SystemStat
+	for rows.Next() {
+		var s model.SystemStat
+		if err := rows.Scan(&s.ID, &s.CPUPercent, &s.MemoryUsage, &s.CreatedAt); err != nil {
+			return nil, err
+		}
+		results = append(results, s)
+	}
+	return results, nil
+}
