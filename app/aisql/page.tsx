@@ -26,6 +26,7 @@ import { LoadingButton } from '../components/LoadingButton'
 import { useHistory, useOllamaModels, useClipboard } from '../hooks'
 import { useToastContext } from '../providers/ToastProvider'
 import { useI18n } from '../providers/I18nProvider'
+import { useAuth } from '@/app/context/AuthContext'
 import { STORAGE_KEYS, DB_PORTS, API_BASE } from '@/constants'
 import { formatBytes } from '../utils'
 import '../tools.css'
@@ -76,6 +77,7 @@ const DEFAULT_CONFIG: DbConfig = {
 }
 
 export default function AiSqlTool() {
+  const { token } = useAuth()
   const toast = useToastContext()
   const { t } = useI18n()
 
@@ -156,7 +158,10 @@ export default function AiSqlTool() {
     try {
       const res = await fetch(`${API_BASE}/db/connect`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
         body: JSON.stringify(config)
       })
       const data = await res.json()
@@ -171,7 +176,10 @@ export default function AiSqlTool() {
         // Get databases
         const dbRes = await fetch(`${API_BASE}/db/databases`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
           body: JSON.stringify(config)
         })
         const dbData = await dbRes.json()
@@ -206,7 +214,10 @@ export default function AiSqlTool() {
       isLoadingSchemaRef.current = true
       const res = await fetch(`${API_BASE}/db/schema`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
         body: JSON.stringify(config)
       })
       const data = await res.json()
@@ -267,7 +278,10 @@ export default function AiSqlTool() {
     try {
       const res = await fetch(`${API_BASE}/ollama/generate`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
         body: JSON.stringify({
           prompt: naturalInput,
           schema: schema.formatted,
@@ -304,7 +318,10 @@ export default function AiSqlTool() {
     try {
       const res = await fetch(`${API_BASE}/db/execute`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
         body: JSON.stringify({
           sql: generatedSql,
           ...config

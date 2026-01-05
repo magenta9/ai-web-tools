@@ -7,6 +7,7 @@ import { Panel } from '../components/Panel'
 import { ModelSelector } from '../components/ModelSelector'
 import { LoadingButton } from '../components/LoadingButton'
 import { useHistory, useOllamaModels, useClipboard } from '../hooks'
+import { useAuth } from '@/app/context/AuthContext'
 import { Languages, ArrowRightLeft, Copy, Loader2, History } from 'lucide-react'
 import { STORAGE_KEYS, API_BASE } from '@/constants'
 import '../tools.css'
@@ -45,6 +46,7 @@ export default function TranslatePage() {
     const [isTranslating, setIsTranslating] = useState(false)
     const [error, setError] = useState('')
 
+    const { token } = useAuth()
     const { models: availableModels, selectedModel, setSelectedModel } = useOllamaModels()
     const { copyWithToast } = useClipboard()
     const {
@@ -69,7 +71,8 @@ export default function TranslatePage() {
             const response = await fetch(`${API_BASE}/ollama/translate`, {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
                 },
                 body: JSON.stringify({
                     text: sourceText,
