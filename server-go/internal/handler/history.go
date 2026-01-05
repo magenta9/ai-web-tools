@@ -17,6 +17,12 @@ func NewHistoryHandler(repo *repository.Repository) *HistoryHandler {
 }
 
 func (h *HistoryHandler) Save(c *gin.Context) {
+	userID, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(401, gin.H{"success": false, "error": "Unauthorized"})
+		return
+	}
+
 	var req struct {
 		ToolName   string `json:"tool_name"`
 		InputData  any    `json:"input_data"`
@@ -31,7 +37,7 @@ func (h *HistoryHandler) Save(c *gin.Context) {
 		ToolName:   req.ToolName,
 		InputData:  req.InputData,
 		OutputData: req.OutputData,
-	})
+	}, userID.(int))
 	if err != nil {
 		c.JSON(500, gin.H{"success": false, "error": err.Error()})
 		return
@@ -41,6 +47,12 @@ func (h *HistoryHandler) Save(c *gin.Context) {
 }
 
 func (h *HistoryHandler) Get(c *gin.Context) {
+	userID, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(401, gin.H{"success": false, "error": "Unauthorized"})
+		return
+	}
+
 	toolName := c.Query("tool_name")
 	if toolName == "" {
 		c.JSON(400, gin.H{"success": false, "error": "tool_name is required"})
@@ -48,7 +60,7 @@ func (h *HistoryHandler) Get(c *gin.Context) {
 	}
 
 	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "50"))
-	history, err := h.repo.GetHistory(c.Request.Context(), toolName, limit)
+	history, err := h.repo.GetHistory(c.Request.Context(), toolName, userID.(int), limit)
 	if err != nil {
 		c.JSON(500, gin.H{"success": false, "error": err.Error()})
 		return

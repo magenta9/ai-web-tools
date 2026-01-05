@@ -12,6 +12,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/magenta9/ai-web-tools/server/internal/config"
 	"github.com/magenta9/ai-web-tools/server/internal/handler"
+	"github.com/magenta9/ai-web-tools/server/internal/middleware"
 	"github.com/magenta9/ai-web-tools/server/internal/migration"
 	"github.com/magenta9/ai-web-tools/server/internal/repository"
 )
@@ -51,9 +52,12 @@ func main() {
 	dbH := handler.NewDBHandler()
 	var historyH *handler.HistoryHandler
 	var promptH *handler.PromptHandler
+	var authH *handler.AuthHandler
+
 	if repo != nil {
 		historyH = handler.NewHistoryHandler(repo)
 		promptH = handler.NewPromptHandler(repo)
+		authH = handler.NewAuthHandler(repo)
 	}
 
 	// Router
@@ -85,12 +89,25 @@ func main() {
 			})
 		})
 
+		// Auth
+		if authH != nil {
+			auth := api.Group("/auth")
+			{
+				auth.POST("/register", authH.Register)
+				auth.POST("/login", authH.Login)
+				auth.GET("/me", middleware.AuthMiddleware(), authH.Me)
+			}
+		}
+
 		// Models (unified across all providers)
 		api.GET("/models", modelH.GetAllModels)
 		api.GET("/models/:provider", modelH.GetModelsByProvider)
 
+		// Protected Routes
+		protected := api.Group("/", middleware.AuthMiddleware())
+
 		// Ollama
-		ollama := api.Group("/ollama")
+		ollama := protected.Group("/ollama")
 		{
 			ollama.GET("/models", ollamaH.GetModels)
 			ollama.POST("/generate", ollamaH.Generate)
@@ -99,7 +116,7 @@ func main() {
 		}
 
 		// Database
-		db := api.Group("/db")
+		db := protected.Group("/db")
 		{
 			db.POST("/connect", dbH.Connect)
 			db.POST("/databases", dbH.GetDatabases)
@@ -109,15 +126,15 @@ func main() {
 
 		// History (only if DB available)
 		if historyH != nil {
-			api.POST("/history", historyH.Save)
-			api.GET("/history", historyH.Get)
-			api.DELETE("/history/:id", historyH.Delete)
-			api.DELETE("/history", historyH.Clear)
+			protected.POST("/history", historyH.Save)
+			protected.GET("/history", historyH.Get)
+			protected.DELETE("/history/:id", historyH.Delete)
+			protected.DELETE("/history", historyH.Clear)
 		}
 
 		// Prompts (only if DB available)
 		if promptH != nil {
-			prompts := api.Group("/prompts")
+			prompts := protected.Group("/prompts")
 			{
 				prompts.POST("", promptH.Create)
 				prompts.GET("", promptH.List)

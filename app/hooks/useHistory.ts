@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useEffect } from 'react'
 import { MAX_HISTORY_ITEMS, API_BASE } from '@/constants'
+import { useAuth } from '@/app/context/AuthContext'
 
 export interface BaseHistoryItem {
     type: string
@@ -67,15 +68,18 @@ function safeSetToStorage<T extends BaseHistoryItem>(key: string, data: T[]): vo
 }
 
 // Backend API functions
-async function saveToBackend(toolName: string, item: BaseHistoryItem & Record<string, unknown>): Promise<void> {
-    if (!toolName) return
+async function saveToBackend(toolName: string, item: BaseHistoryItem & Record<string, unknown>, token: string | null): Promise<void> {
+    if (!toolName || !token) return
 
     try {
         // Extract known fields and pass through any additional fields
         const { type, input, output, data, ...extraFields } = item
         await fetch(`${API_BASE}/history`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
             body: JSON.stringify({
                 tool_name: toolName,
                 input_data: { type, input, data, ...extraFields },
@@ -87,11 +91,15 @@ async function saveToBackend(toolName: string, item: BaseHistoryItem & Record<st
     }
 }
 
-async function loadFromBackend(toolName: string, limit = 50): Promise<(BaseHistoryItem & { id?: number })[]> {
-    if (!toolName) return []
+async function loadFromBackend(toolName: string, token: string | null, limit = 50): Promise<(BaseHistoryItem & { id?: number })[]> {
+    if (!toolName || !token) return []
 
     try {
-        const response = await fetch(`${API_BASE}/history?tool_name=${toolName}&limit=${limit}`)
+        const response = await fetch(`${API_BASE}/history?tool_name=${toolName}&limit=${limit}`, {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        })
         if (!response.ok) return []
 
         const data = await response.json()
@@ -117,10 +125,14 @@ async function loadFromBackend(toolName: string, limit = 50): Promise<(BaseHisto
     }
 }
 
-async function deleteFromBackend(id: number): Promise<boolean> {
+async function deleteFromBackend(id: number, token: string | null): Promise<boolean> {
+    if (!token) return false
     try {
         const response = await fetch(`${API_BASE}/history/${id}`, {
-            method: 'DELETE'
+            method: 'DELETE',
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
         })
         return response.ok
     } catch (error) {
@@ -129,10 +141,14 @@ async function deleteFromBackend(id: number): Promise<boolean> {
     }
 }
 
-async function clearFromBackend(toolName: string): Promise<boolean> {
+async function clearFromBackend(toolName: string, token: string | null): Promise<boolean> {
+    if (!token) return false
     try {
         const response = await fetch(`${API_BASE}/history?tool_name=${toolName}`, {
-            method: 'DELETE'
+            method: 'DELETE',
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
         })
         return response.ok
     } catch (error) {
@@ -146,6 +162,7 @@ export function useHistory<T extends BaseHistoryItem>(options: UseHistoryOptions
     const [history, setHistory] = useState<T[]>([])
     const [historyVisible, setHistoryVisible] = useState(false)
     const [isLoading, setIsLoading] = useState(false)
+    const { token } = useAuth()
 
     const loadHistory = useCallback(() => {
         const savedHistory = safeGetFromStorage<T>(storageKey)
@@ -169,42 +186,42 @@ export function useHistory<T extends BaseHistoryItem>(options: UseHistoryOptions
         })
 
         // Sync to backend if toolName is provided and syncToBackend is true
-        if (toolName && syncToBackend) {
-            saveToBackend(toolName, newItem as BaseHistoryItem & Record<string, unknown>)
+        if (toolName && syncToBackend && token) {
+            saveToBackend(toolName, newItem as BaseHistoryItem & Record<string, unknown>, token)
         }
-    }, [storageKey, maxItems, toolName])
+    }, [storageKey, maxItems, toolName, token])
 
     const deleteHistoryItem = useCallback((index: number) => {
         const item = history[index]
         // Delete from backend if item has id
-        if (item && 'id' in item && (item as any).id) {
-            deleteFromBackend((item as any).id)
+        if (item && 'id' in item && (item as any).id && token) {
+            deleteFromBackend((item as any).id, token)
         }
         setHistory(prev => {
             const updatedHistory = prev.filter((_, i) => i !== index)
             safeSetToStorage(storageKey, updatedHistory)
             return updatedHistory
         })
-    }, [storageKey, history])
+    }, [storageKey, history, token])
 
     const clearAllHistory = useCallback(() => {
         // Clear from backend
-        if (toolName) {
-            clearFromBackend(toolName)
+        if (toolName && token) {
+            clearFromBackend(toolName, token)
         }
         setHistory([])
         if (typeof window !== 'undefined') {
             localStorage.removeItem(storageKey)
         }
-    }, [storageKey, toolName])
+    }, [storageKey, toolName, token])
 
     const showHistory = useCallback(async () => {
         setHistoryVisible(true)
         // Auto-load from backend when opening history
-        if (toolName && !isLoading) {
+        if (toolName && !isLoading && token) {
             setIsLoading(true)
             try {
-                const backendHistory = await loadFromBackend(toolName)
+                const backendHistory = await loadFromBackend(toolName, token)
                 if (backendHistory.length > 0) {
                     setHistory(prev => {
                         const merged = [...backendHistory, ...prev]
@@ -220,15 +237,15 @@ export function useHistory<T extends BaseHistoryItem>(options: UseHistoryOptions
                 setIsLoading(false)
             }
         }
-    }, [toolName, storageKey, maxItems, isLoading])
+    }, [toolName, storageKey, maxItems, isLoading, token])
     const hideHistory = useCallback(() => setHistoryVisible(false), [])
 
     const loadFromBackendHistory = useCallback(async () => {
-        if (!toolName || isLoading) return
+        if (!toolName || isLoading || !token) return
 
         setIsLoading(true)
         try {
-            const backendHistory = await loadFromBackend(toolName)
+            const backendHistory = await loadFromBackend(toolName, token)
             if (backendHistory.length > 0) {
                 // Merge with local storage, preferring newer items
                 setHistory(prev => {
@@ -245,7 +262,7 @@ export function useHistory<T extends BaseHistoryItem>(options: UseHistoryOptions
         } finally {
             setIsLoading(false)
         }
-    }, [toolName, storageKey, maxItems, isLoading])
+    }, [toolName, storageKey, maxItems, isLoading, token])
 
     return {
         history,
