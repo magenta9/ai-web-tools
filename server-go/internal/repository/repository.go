@@ -48,7 +48,42 @@ func (r *Repository) Close() {
 	r.pool.Close()
 }
 
-func (r *Repository) SaveHistory(ctx context.Context, h *model.ToolHistory) error {
+// User methods
+func (r *Repository) CreateUser(u *model.User) error {
+	var id int
+	err := r.pool.QueryRow(context.Background(),
+		`INSERT INTO users (username, password_hash) VALUES ($1, $2) RETURNING id, created_at`,
+		u.Username, u.PasswordHash).Scan(&id, &u.CreatedAt)
+	if err != nil {
+		return err
+	}
+	u.ID = id
+	return nil
+}
+
+func (r *Repository) GetUserByUsername(username string) (*model.User, error) {
+	var u model.User
+	err := r.pool.QueryRow(context.Background(),
+		`SELECT id, username, password_hash, created_at FROM users WHERE username = $1`,
+		username).Scan(&u.ID, &u.Username, &u.PasswordHash, &u.CreatedAt)
+	if err != nil {
+		return nil, err
+	}
+	return &u, nil
+}
+
+func (r *Repository) GetUserByID(id int) (*model.User, error) {
+	var u model.User
+	err := r.pool.QueryRow(context.Background(),
+		`SELECT id, username, password_hash, created_at FROM users WHERE id = $1`,
+		id).Scan(&u.ID, &u.Username, &u.PasswordHash, &u.CreatedAt)
+	if err != nil {
+		return nil, err
+	}
+	return &u, nil
+}
+
+func (r *Repository) SaveHistory(ctx context.Context, h *model.ToolHistory, userID int) error {
 	inputJSON, err := json.Marshal(h.InputData)
 	if err != nil {
 		return fmt.Errorf("failed to marshal input_data: %w", err)
@@ -59,20 +94,20 @@ func (r *Repository) SaveHistory(ctx context.Context, h *model.ToolHistory) erro
 	}
 
 	_, err = r.pool.Exec(ctx,
-		`INSERT INTO tool_history (tool_name, input_data, output_data) VALUES ($1, $2, $3)`,
-		h.ToolName, inputJSON, outputJSON)
+		`INSERT INTO tool_history (tool_name, input_data, output_data, user_id) VALUES ($1, $2, $3, $4)`,
+		h.ToolName, inputJSON, outputJSON, userID)
 	return err
 }
 
-func (r *Repository) GetHistory(ctx context.Context, toolName string, limit int) ([]model.ToolHistory, error) {
+func (r *Repository) GetHistory(ctx context.Context, toolName string, userID int, limit int) ([]model.ToolHistory, error) {
 	if limit <= 0 {
 		limit = 50
 	}
 
 	rows, err := r.pool.Query(ctx,
 		`SELECT id, tool_name, input_data, output_data, created_at 
-		 FROM tool_history WHERE tool_name = $1 
-		 ORDER BY created_at DESC LIMIT $2`, toolName, limit)
+		 FROM tool_history WHERE tool_name = $1 AND user_id = $2
+		 ORDER BY created_at DESC LIMIT $3`, toolName, userID, limit)
 	if err != nil {
 		return nil, err
 	}

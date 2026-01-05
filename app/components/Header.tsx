@@ -1,7 +1,8 @@
 'use client'
 
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
+import { useAuth } from '../context/AuthContext'
 import {
   Code,
   Image,
@@ -40,10 +41,34 @@ const aiTools = [
 
 const Header = memo(function Header() {
   const pathname = usePathname()
+  const router = useRouter()
+  const { user } = useAuth()
   const { isDarkMode, toggleTheme } = useTheme()
   const [regularDropdownOpen, setRegularDropdownOpen] = useState(false)
   const [aiDropdownOpen, setAiDropdownOpen] = useState(false)
   const closeTimerRef = useRef<Map<string, NodeJS.Timeout>>(new Map())
+  const [clickCount, setClickCount] = useState(0)
+  const clickTimerRef = useRef<NodeJS.Timeout | null>(null)
+
+  const handleLogoClick = (e: React.MouseEvent) => {
+    e.preventDefault()
+    setClickCount(prev => {
+      const newCount = prev + 1
+      if (clickTimerRef.current) clearTimeout(clickTimerRef.current)
+
+      clickTimerRef.current = setTimeout(() => {
+        setClickCount(0)
+      }, 500)
+
+      if (newCount === 5) {
+        if (user?.username === 'root') {
+          router.push('/monitor')
+        }
+        return 0
+      }
+      return newCount
+    })
+  }
 
   const clearCloseTimer = (key: string) => {
     const timer = closeTimerRef.current.get(key)
@@ -68,7 +93,7 @@ const Header = memo(function Header() {
     <header className="header">
       <div className="container">
         <div className="header-content">
-          <Link href="/" className="logo">
+          <Link href="/" className="logo" onClick={handleLogoClick}>
             <div className="logo-icon">
               <Code size={20} />
             </div>

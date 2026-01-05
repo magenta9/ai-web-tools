@@ -16,6 +16,7 @@ import { useClipboard, useOllamaModels, useHistory } from '../hooks'
 import { useToastContext } from '../providers/ToastProvider'
 import { useI18n } from '../providers/I18nProvider'
 import { useTheme } from '../providers/ThemeProvider'
+import { useAuth } from '@/app/context/AuthContext'
 import { MarkdownMessage } from './MarkdownMessage'
 import type { ChatMessage, Prompt } from '@/types'
 import { STORAGE_KEYS } from '@/constants'
@@ -26,6 +27,7 @@ import './chat.css'
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'
 
 export default function ChatPage() {
+    const { token } = useAuth()
     const [messages, setMessages] = useState<ChatMessage[]>([])
     const [input, setInput] = useState('')
     const [loading, setLoading] = useState(false)
@@ -92,7 +94,10 @@ export default function ChatPage() {
         try {
             const response = await fetch(`${API_BASE}/ollama/chat`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
                 body: JSON.stringify({
                     message: content.trim(),
                     model: selectedModel,
@@ -102,6 +107,9 @@ export default function ChatPage() {
             })
 
             if (!response.ok) {
+                if (response.status === 401) {
+                    throw new Error('Please login to continue')
+                }
                 throw new Error('Failed to get response from AI')
             }
 
