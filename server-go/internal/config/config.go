@@ -28,6 +28,9 @@ type Config struct {
 	// Migration settings
 	MigrationAuto bool
 	SchemaVersion int
+
+	// Auth
+	JWTSecret string
 }
 
 func Load() *Config {
@@ -35,6 +38,7 @@ func Load() *Config {
 
 	return &Config{
 		APIPort:         getEnv("API_PORT", "3001"),
+		JWTSecret:       getEnv("JWT_SECRET", "default-dev-secret"),
 		DBHost:          getEnv("DB_HOST", "localhost"),
 		DBPort:          getEnv("DB_PORT", "5432"),
 		DBUser:          getEnv("DB_USER", "webtools"),

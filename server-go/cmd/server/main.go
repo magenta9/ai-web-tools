@@ -57,7 +57,7 @@ func main() {
 	if repo != nil {
 		historyH = handler.NewHistoryHandler(repo)
 		promptH = handler.NewPromptHandler(repo)
-		authH = handler.NewAuthHandler(repo)
+		authH = handler.NewAuthHandler(repo, cfg)
 	}
 
 	// Router
