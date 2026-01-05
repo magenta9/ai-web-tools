@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect, useRef } from 'react'
 import { useToastContext } from '../providers/ToastProvider'
+import { useAuth } from '@/app/context/AuthContext'
 import type { Prompt, PromptFormData } from '@/types'
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'
@@ -16,11 +17,17 @@ export function usePrompts(options: UsePromptsOptions = {}) {
     optionsRef.current = options
 
     const { autoLoad = true } = options
+    const { token } = useAuth()
     const [prompts, setPrompts] = useState<Prompt[]>([])
     const [allTags, setAllTags] = useState<string[]>([])
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
     const toast = useToastContext()
+
+    const getAuthHeaders = () => ({
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+    })
 
     const loadPrompts = useCallback(async (searchQuery?: string, filterTags?: string[]) => {
         setLoading(true)
@@ -30,7 +37,9 @@ export function usePrompts(options: UsePromptsOptions = {}) {
             if (searchQuery) params.append('search', searchQuery)
             if (filterTags && filterTags.length > 0) params.append('tags', filterTags.join(','))
 
-            const response = await fetch(`${API_BASE}/prompts?${params}`)
+            const response = await fetch(`${API_BASE}/prompts?${params}`, {
+                headers: getAuthHeaders()
+            })
             const data = await response.json()
 
             if (data.success) {
@@ -49,7 +58,9 @@ export function usePrompts(options: UsePromptsOptions = {}) {
 
     const loadTags = useCallback(async () => {
         try {
-            const response = await fetch(`${API_BASE}/prompts/tags`)
+            const response = await fetch(`${API_BASE}/prompts/tags`, {
+                headers: getAuthHeaders()
+            })
             const data = await response.json()
 
             if (data.success) {
@@ -65,7 +76,7 @@ export function usePrompts(options: UsePromptsOptions = {}) {
         try {
             const response = await fetch(`${API_BASE}/prompts`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: getAuthHeaders(),
                 body: JSON.stringify(formData)
             })
             const data = await response.json()
@@ -93,7 +104,7 @@ export function usePrompts(options: UsePromptsOptions = {}) {
         try {
             const response = await fetch(`${API_BASE}/prompts/${id}`, {
                 method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
+                headers: getAuthHeaders(),
                 body: JSON.stringify(formData)
             })
             const data = await response.json()
@@ -119,7 +130,8 @@ export function usePrompts(options: UsePromptsOptions = {}) {
         setLoading(true)
         try {
             const response = await fetch(`${API_BASE}/prompts/${id}`, {
-                method: 'DELETE'
+                method: 'DELETE',
+                headers: getAuthHeaders()
             })
             const data = await response.json()
 
@@ -143,7 +155,8 @@ export function usePrompts(options: UsePromptsOptions = {}) {
     const incrementUseCount = useCallback(async (id: number) => {
         try {
             await fetch(`${API_BASE}/prompts/${id}/use`, {
-                method: 'POST'
+                method: 'POST',
+                headers: getAuthHeaders()
             })
         } catch (err) {
             console.error('Failed to increment use count:', err)
