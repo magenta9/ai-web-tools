@@ -1,15 +1,5 @@
-/* AI SQL Tool Styles - Matching test.html */
-.aisql-tool {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  position: relative;
-  gap: 24px;
-  padding: 20px;
-  max-width: 1200px;
-  margin: 0 auto;
-  width: 100%;
-}
+/* AI SQL Tool Specific Styles */
+/* Common styles (panel, action-btn, etc.) are imported from ../tools.css */
 
 /* Header Section */
 .aisql-header {
@@ -26,23 +16,24 @@
 }
 
 .title-icon {
-  background: #3b82f6;
+  background: var(--accent-color);
   padding: 8px;
   border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+  box-shadow: 0 4px 12px var(--accent-light);
 }
 
 .header-title h1 {
   font-size: 18px;
   font-weight: 600;
-  color: #fafafa;
+  color: var(--text-primary);
   letter-spacing: -0.02em;
+  margin: 0;
 }
 
 .version-badge {
   font-size: 10px;
-  background: #27272a;
-  color: #a1a1aa;
+  background: var(--bg-tertiary);
+  color: var(--text-muted);
   padding: 2px 6px;
   border-radius: 4px;
   margin-left: 8px;
@@ -68,9 +59,9 @@
 }
 
 .connection-badge.connected {
-  background: rgba(16, 185, 129, 0.1);
-  color: #10b981;
-  border-color: rgba(16, 185, 129, 0.2);
+  background: rgba(34, 197, 94, 0.1);
+  color: #22c55e;
+  border-color: rgba(34, 197, 94, 0.2);
 }
 
 .connection-badge.connected::before {
@@ -79,19 +70,18 @@
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: #10b981;
+  background: #22c55e;
   margin-right: 6px;
   animation: pulse 2s infinite;
 }
 
-/* Configuration Card - Unified Panel Style */
+/* Configuration Card */
 .config-card {
   background: var(--card-bg);
   border: 1px solid var(--border-color);
   border-radius: 12px;
-  padding: 0;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
   overflow: hidden;
+  box-shadow: var(--shadow-md);
 }
 
 .config-header {
@@ -103,7 +93,7 @@
 }
 
 .config-header-icon {
-  color: #3b82f6;
+  color: var(--accent-color);
 }
 
 .config-header-title {
@@ -150,10 +140,9 @@
 .config-field label {
   font-size: 11px;
   font-weight: 500;
-  color: #71717a;
+  color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  margin-bottom: 2px;
 }
 
 .config-field input,
@@ -161,7 +150,7 @@
   padding: 8px 12px;
   background: var(--bg-secondary);
   border: 1px solid var(--border-color);
-  color: var(--text-secondary);
+  color: var(--text-primary);
   font-size: 14px;
   border-radius: 8px;
   transition: all 0.2s ease;
@@ -172,12 +161,11 @@
 .config-field select:focus {
   outline: none;
   border-color: var(--accent-color);
-  box-shadow: 0 0 0 1px var(--accent-color);
-  color: var(--text-primary);
+  box-shadow: 0 0 0 3px var(--accent-light);
 }
 
 .config-field input::placeholder {
-  color: #52525b;
+  color: var(--text-muted);
 }
 
 .config-field input:disabled,
@@ -187,7 +175,37 @@
   cursor: not-allowed;
 }
 
-/* Query Area - Split Layout (Vertical) */
+.config-field .password-input {
+  position: relative;
+  display: flex;
+}
+
+.config-field .password-input input {
+  padding-right: 40px;
+}
+
+.config-field .password-toggle {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 4px;
+  transition: color 0.2s ease;
+}
+
+.config-field .password-toggle:hover {
+  color: var(--text-primary);
+}
+
+.model-select {
+  color: var(--accent-color) !important;
+}
+
+/* Query Area */
 .query-area {
   display: grid;
   grid-template-rows: 1fr 1fr;
@@ -203,200 +221,55 @@
   }
 }
 
-/* Minimalist Panel */
-.panel {
-  display: flex;
-  flex-direction: column;
-  background: var(--card-bg);
-  border: 1px solid var(--border-color);
-  overflow: hidden;
+/* Panel specific styles for AISQL */
+.aisql-tool .panel {
   border-radius: 12px;
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-md);
 }
 
-.panel:focus-within {
+.aisql-tool .panel:focus-within {
   border-color: var(--accent-color);
-  box-shadow: 0 4px 16px rgba(59, 130, 246, 0.1);
 }
 
-/* Clean Panel Header */
-.panel-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 12px 16px;
-  border-bottom: 1px solid var(--border-color);
-  flex-shrink: 0;
+.aisql-tool .panel-title.input {
+  color: var(--accent-color);
 }
 
-.panel-title {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-weight: 500;
-  font-size: 13px;
-  color: var(--text-primary);
+.aisql-tool .panel-title.output {
+  color: #22c55e;
 }
 
-.panel-title.input {
-  color: #3b82f6;
-}
-
-.panel-title.output {
-  color: #10b981;
-}
-
-.panel-title.error {
+.aisql-tool .panel-title.error {
   color: #ef4444;
 }
 
-.panel-actions {
-  display: flex;
-  gap: 4px;
-  align-items: center;
-}
-
-.model-select-wrapper {
-  margin-left: auto;
-}
-
-.header-model-select {
-  padding: 6px 12px;
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-color);
-  color: var(--accent-color);
-  font-size: 12px;
-  font-weight: 500;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  outline: none;
-}
-
-.header-model-select:focus {
-  border-color: var(--accent-color);
-  box-shadow: 0 0 0 1px var(--accent-color);
-}
-
-.header-model-select:hover {
-  border-color: var(--border-hover);
-}
-
-/* Minimalist Button */
-.panel-btn {
-  padding: 6px 12px;
-  background: transparent;
-  border: 1px solid transparent;
-  color: #71717a;
-  font-weight: 500;
-  font-size: 12px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  gap: 5px;
-}
-
-.panel-btn:hover:not(:disabled) {
-  background: var(--bg-tertiary);
-  color: var(--text-primary);
-}
-
-.panel-btn:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
-
-.panel-content {
-  flex: 1;
-  padding: 0;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-}
-
-/* Minimalist Textarea */
-.query-textarea,
-.sql-textarea,
-.code-textarea {
-  width: 100%;
-  height: 100%;
-  min-height: 0;
-  padding: 16px;
-  background: var(--bg-secondary);
-  border: none;
-  color: var(--text-primary);
-  font-family: 'Fira Code', 'JetBrains Mono', monospace;
+.aisql-tool .query-textarea,
+.aisql-tool .sql-textarea {
+  font-family: 'JetBrains Mono', monospace;
   font-size: 14px;
-  line-height: 1.6;
-  resize: none;
-  outline: none;
-  transition: all 0.2s ease;
 }
 
-.query-textarea::placeholder,
-.sql-textarea::placeholder {
-  color: var(--text-muted);
-  opacity: 0.8;
+.aisql-tool .sql-textarea {
+  color: #22c55e;
 }
 
-.sql-textarea {
-  color: #10b981;
+/* Action Button variations */
+.aisql-tool .generate-btn {
+  background: var(--accent-color);
 }
 
-/* Panel Footer */
-.panel-footer {
-  display: flex;
-  justify-content: flex-start;
-  padding: 12px;
-  border-top: 1px solid var(--border-color);
-  flex-shrink: 0;
-  background: var(--card-bg);
+.aisql-tool .generate-btn:hover:not(:disabled) {
+  background: var(--accent-hover);
 }
 
-/* Action Button - Matching test.html */
-.action-btn {
-  padding: 8px 16px;
-  background: #2563eb;
-  border: none;
-  color: white;
-  font-weight: 500;
-  font-size: 13px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  gap: 6px;
+.aisql-tool .execute-btn {
+  background: #22c55e;
+  box-shadow: 0 4px 12px rgba(34, 197, 94, 0.2);
 }
 
-.action-btn:hover:not(:disabled) {
-  background: #3b82f6;
-}
-
-.action-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.generate-btn {
-  background: #3b82f6;
-}
-
-.generate-btn:hover:not(:disabled) {
-  background: #2563eb;
-}
-
-.execute-btn {
-  background: #10b981;
-  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
-}
-
-.execute-btn:hover:not(:disabled) {
-  background: #059669;
-  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+.aisql-tool .execute-btn:hover:not(:disabled) {
+  background: #16a34a;
+  box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3);
 }
 
 /* Connect button in header */
@@ -405,7 +278,7 @@
   align-items: center;
   gap: 6px;
   padding: 8px 16px;
-  background: #3b82f6;
+  background: var(--accent-color);
   border: none;
   color: white;
   font-weight: 500;
@@ -416,45 +289,12 @@
 }
 
 .header-status .connect-btn:hover:not(:disabled) {
-  background: #2563eb;
+  background: var(--accent-hover);
 }
 
 .header-status .connect-btn:disabled {
   opacity: 0.6;
   cursor: not-allowed;
-}
-
-/* Password input in config field */
-.config-field .password-input {
-  position: relative;
-  display: flex;
-}
-
-.config-field .password-input input {
-  width: 100%;
-  padding-right: 40px;
-}
-
-.config-field .password-toggle {
-  position: absolute;
-  right: 10px;
-  top: 50%;
-  transform: translateY(-50%);
-  background: none;
-  border: none;
-  color: #71717a;
-  cursor: pointer;
-  padding: 4px;
-  transition: color 0.2s ease;
-}
-
-.config-field .password-toggle:hover {
-  color: #d4d4d8;
-}
-
-/* Model select with blue text */
-.model-select {
-  color: #3b82f6 !important;
 }
 
 /* Schema Panel */
@@ -463,7 +303,7 @@
   border: 1px solid var(--border-color);
   border-radius: 12px;
   overflow: hidden;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-md);
 }
 
 .schema-header {
@@ -513,7 +353,7 @@
   border-radius: 6px;
   transition: all 0.15s ease;
   font-size: 12px;
-  color: #a1a1aa;
+  color: var(--text-secondary);
 }
 
 .schema-table-item:hover {
@@ -522,7 +362,7 @@
 }
 
 .schema-table-item.active {
-  background: #3b82f6;
+  background: var(--accent-color);
   color: white;
 }
 
@@ -537,8 +377,8 @@
 
 .schema-table-item-count {
   font-size: 10px;
-  color: #71717a;
-  background: #18181b;
+  color: var(--text-muted);
+  background: var(--bg-tertiary);
   padding: 2px 6px;
   border-radius: 4px;
   flex-shrink: 0;
@@ -578,7 +418,7 @@
 .schema-detail-close {
   background: none;
   border: none;
-  color: #71717a;
+  color: var(--text-muted);
   cursor: pointer;
   padding: 4px;
   border-radius: 4px;
@@ -586,7 +426,7 @@
 }
 
 .schema-detail-close:hover {
-  background: var(--bg-hover);
+  background: var(--bg-tertiary);
   color: var(--text-primary);
 }
 
@@ -595,7 +435,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #52525b;
+  color: var(--text-muted);
   font-size: 13px;
 }
 
@@ -603,22 +443,6 @@
   flex: 1;
   overflow: auto;
   padding: 8px 0;
-}
-
-.schema-table {
-  background: transparent;
-  border: none;
-  border-radius: 0;
-  overflow: visible;
-}
-
-.col-not-null {
-  font-size: 9px;
-  font-weight: 500;
-  color: #ef4444;
-  background: rgba(239, 68, 68, 0.1);
-  padding: 2px 6px;
-  border-radius: 4px;
 }
 
 /* Table Styles */
@@ -648,12 +472,12 @@
 
 .data-table td {
   color: var(--text-secondary);
-  font-family: 'Fira Code', 'JetBrains Mono', monospace;
+  font-family: 'JetBrains Mono', monospace;
   font-size: 12px;
 }
 
 .data-table tr:hover td {
-  background: rgba(59, 130, 246, 0.05);
+  background: var(--accent-light);
 }
 
 .data-table tr:last-child td {
@@ -676,7 +500,7 @@
   border: 1px solid var(--border-color);
   border-radius: 12px;
   overflow: hidden;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-md);
 }
 
 .result-output {
@@ -686,19 +510,11 @@
   background: var(--bg-secondary);
   border: none;
   color: var(--text-primary);
-  font-family: 'Fira Code', 'JetBrains Mono', monospace;
+  font-family: 'JetBrains Mono', monospace;
   font-size: 13px;
   line-height: 1.6;
   overflow: auto;
   margin: 0;
-}
-
-.error-message {
-  background: rgba(239, 68, 68, 0.08);
-  color: #ef4444;
-  padding: 16px 20px;
-  font-size: 13px;
-  line-height: 1.6;
 }
 
 /* History Trigger */
@@ -713,21 +529,21 @@
   padding: 10px 18px;
   background: var(--card-bg);
   border: 1px solid var(--border-color);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+  box-shadow: var(--shadow-lg);
   border-radius: 10px;
 }
 
 .history-trigger .panel-btn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
 }
 
-/* History Panel Buttons - Unified with panel-btn style */
+/* History Panel Buttons */
 .aisql-tool .history-header .cyber-btn-small {
   padding: 8px 16px;
   background: transparent;
-  border: 1px solid #3f3f46;
-  color: #a1a1aa;
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
   font-weight: 500;
   font-size: 13px;
   cursor: pointer;
@@ -744,49 +560,12 @@
   color: var(--text-primary);
 }
 
-/* Empty state */
-.empty-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  height: 100%;
-  min-height: 200px;
-  color: #71717a;
-  font-size: 14px;
-}
-
-/* Scrollbar styling - matching test.html */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-
-::-webkit-scrollbar-track {
-  background: var(--bg-secondary);
-  border-radius: 3px;
-}
-
-::-webkit-scrollbar-thumb {
-  background: var(--border-color);
-  border-radius: 3px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: var(--border-hover);
-}
-
-/* Spinner animation */
-.spin {
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  from {
-    transform: rotate(0deg);
+/* Pulse animation for connection badge */
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
   }
-
-  to {
-    transform: rotate(360deg);
+  50% {
+    opacity: 0.5;
   }
 }

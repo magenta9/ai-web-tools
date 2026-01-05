@@ -28,6 +28,7 @@ import { useToastContext } from '../providers/ToastProvider'
 import { useI18n } from '../providers/I18nProvider'
 import { STORAGE_KEYS, DB_PORTS, API_BASE } from '@/constants'
 import { formatBytes } from '../utils'
+import '../tools.css'
 import './tools.css'
 
 interface DbConfig {
