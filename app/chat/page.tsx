@@ -26,6 +26,17 @@ import './chat.css'
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'
 
+interface ChatHistoryItem {
+    type: 'chat'
+    input: string
+    output: string
+    timestamp: number
+    data: {
+        messages: ChatMessage[]
+        model: string
+    }
+}
+
 export default function ChatPage() {
     const { token } = useAuth()
     const [messages, setMessages] = useState<ChatMessage[]>([])
@@ -41,27 +52,29 @@ export default function ChatPage() {
     const { selectedModel, models, isLoading: loadingModels, setSelectedModel } = useOllamaModels()
     const { isDarkMode } = useTheme()
 
-    // Load messages from localStorage on mount
+    // Use useHistory hook for persistent history
+    const {
+        history,
+        saveToHistory,
+        historyVisible,
+        showHistory,
+        hideHistory,
+        deleteHistoryItem,
+        clearAllHistory
+    } = useHistory<ChatHistoryItem>({
+        storageKey: STORAGE_KEYS.CHAT_HISTORY,
+        toolName: 'chat'
+    })
+
+    // Load latest session from history if available
     useEffect(() => {
-        const saved = localStorage.getItem(STORAGE_KEYS.CHAT_HISTORY)
-        if (saved) {
-            try {
-                const parsed = JSON.parse(saved)
-                if (Array.isArray(parsed)) {
-                    setMessages(parsed)
-                }
-            } catch (e) {
-                console.error('Failed to load chat history:', e)
+        if (history.length > 0 && messages.length === 0) {
+            const latest = history[0]
+            if (latest.data && Array.isArray(latest.data.messages)) {
+                setMessages(latest.data.messages)
             }
         }
-    }, [])
-
-    // Save messages to localStorage whenever they change
-    useEffect(() => {
-        if (messages.length > 0) {
-            localStorage.setItem(STORAGE_KEYS.CHAT_HISTORY, JSON.stringify(messages))
-        }
-    }, [messages])
+    }, [history])
 
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -77,7 +90,8 @@ export default function ChatPage() {
             timestamp: Date.now()
         }
 
-        setMessages(prev => [...prev, userMessage])
+        const newMessages = [...messages, userMessage]
+        setMessages(newMessages)
         setInput('')
         setLoading(true)
 
@@ -89,7 +103,9 @@ export default function ChatPage() {
             content: '',
             timestamp: Date.now()
         }
-        setMessages(prev => [...prev, assistantMessage])
+
+        const messagesWithAssistant = [...newMessages, assistantMessage]
+        setMessages(messagesWithAssistant)
 
         try {
             const response = await fetch(`${API_BASE}/ollama/chat`, {
@@ -150,6 +166,22 @@ export default function ChatPage() {
             if (!accumulatedContent) {
                 throw new Error('No response received')
             }
+
+            // Save to history after successful chat exchange
+            const finalMessages = messagesWithAssistant.map(msg =>
+                msg.id === assistantId ? { ...msg, content: accumulatedContent } : msg
+            )
+
+            saveToHistory({
+                type: 'chat',
+                input: content,
+                output: accumulatedContent,
+                data: {
+                    messages: finalMessages,
+                    model: selectedModel
+                }
+            })
+
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : 'Failed to send message'
             toast.error(errorMessage)

@@ -2,11 +2,11 @@ package handler
 
 import (
 	"net/http"
-	"os"
 	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/magenta9/ai-web-tools/server/internal/config"
 	"github.com/magenta9/ai-web-tools/server/internal/model"
 	"github.com/magenta9/ai-web-tools/server/internal/repository"
 	"golang.org/x/crypto/bcrypt"
@@ -14,10 +14,11 @@ import (
 
 type AuthHandler struct {
 	Repo *repository.Repository
+	Config *config.Config
 }
 
-func NewAuthHandler(repo *repository.Repository) *AuthHandler {
-	return &AuthHandler{Repo: repo}
+func NewAuthHandler(repo *repository.Repository, cfg *config.Config) *AuthHandler {
+	return &AuthHandler{Repo: repo, Config: cfg}
 }
 
 func (h *AuthHandler) Register(c *gin.Context) {
@@ -43,7 +44,7 @@ func (h *AuthHandler) Register(c *gin.Context) {
 		return
 	}
 
-	token, err := generateToken(user.ID)
+	token, err := h.generateToken(user.ID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate token"})
 		return
@@ -73,7 +74,7 @@ func (h *AuthHandler) Login(c *gin.Context) {
 		return
 	}
 
-	token, err := generateToken(user.ID)
+	token, err := h.generateToken(user.ID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate token"})
 		return
@@ -101,17 +102,12 @@ func (h *AuthHandler) Me(c *gin.Context) {
 	c.JSON(http.StatusOK, user)
 }
 
-func generateToken(userID int) (string, error) {
-	secret := os.Getenv("JWT_SECRET")
-	if secret == "" {
-		secret = "default-dev-secret"
-	}
-
+func (h *AuthHandler) generateToken(userID int) (string, error) {
 	claims := jwt.MapClaims{
 		"user_id": userID,
 		"exp":     time.Now().Add(time.Hour * 24).Unix(),
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	return token.SignedString([]byte(secret))
+	return token.SignedString([]byte(h.Config.JWTSecret))
 }
