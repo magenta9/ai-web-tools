@@ -23,6 +23,7 @@ import { useHistory, useOllamaModels, useClipboard, useLiveMode } from '../hooks
 import { formatBytes } from '../utils'
 import { useToastContext } from '../providers/ToastProvider'
 import { useI18n } from '../providers/I18nProvider'
+import { useAuth } from '@/app/context/AuthContext'
 import { DEBOUNCE_DELAY, STORAGE_KEYS, API_BASE } from '@/constants'
 import '../tools.css'
 
@@ -242,6 +243,7 @@ function parseProtobufStyle(text: string): Record<string, unknown> {
 }
 
 export default function JsonFixTool() {
+  const { token } = useAuth()
   const [input, setInput] = useState('')
   const [output, setOutput] = useState('')
   const [indent, setIndent] = useState(2)
@@ -316,7 +318,10 @@ export default function JsonFixTool() {
     try {
       const res = await fetch(`${API_BASE}/ollama/generate`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
         body: JSON.stringify({
           prompt: `You must output ONLY valid JSON. No markdown, no explanation, no text whatsoever.
 
