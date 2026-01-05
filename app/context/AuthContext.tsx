@@ -112,7 +112,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Protected route check
   useEffect(() => {
     const publicPaths = ['/login', '/register'];
-    if (!isLoading && !user && !publicPaths.includes(pathname)) {
+    const normalizedPath = pathname.endsWith('/') && pathname.length > 1 ? pathname.slice(0, -1) : pathname;
+    if (!isLoading && !user && !publicPaths.includes(normalizedPath)) {
       console.log('Redirecting to login from', pathname);
       router.push('/login');
     }

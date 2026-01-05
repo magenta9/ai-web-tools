@@ -20,6 +20,7 @@ import {
   MessageSquare
 } from 'lucide-react'
 import { useTheme } from '../providers/ThemeProvider'
+import { useAuth } from '../context/AuthContext'
 import { memo, useState, useRef } from 'react'
 
 const regularTools = [
@@ -41,6 +42,7 @@ const aiTools = [
 const Header = memo(function Header() {
   const pathname = usePathname()
   const { isDarkMode, toggleTheme } = useTheme()
+  const { user, logout } = useAuth()
   const [regularDropdownOpen, setRegularDropdownOpen] = useState(false)
   const [aiDropdownOpen, setAiDropdownOpen] = useState(false)
   const closeTimerRef = useRef<Map<string, NodeJS.Timeout>>(new Map())
@@ -172,6 +174,16 @@ const Header = memo(function Header() {
             >
               {isDarkMode ? <Sun size={16} /> : <Moon size={16} />}
             </button>
+
+            {user && (
+              <button
+                className="nav-link logout-button"
+                onClick={logout}
+                title="Logout"
+              >
+                Logout
+              </button>
+            )}
           </nav>
         </div>
       </div>
