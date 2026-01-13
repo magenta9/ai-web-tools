@@ -46,6 +46,18 @@ export default function ChatPage() {
     const messagesEndRef = useRef<HTMLDivElement>(null)
     const inputRef = useRef<HTMLTextAreaElement>(null)
 
+    // Auto-resize textarea
+    const adjustTextareaHeight = () => {
+        if (inputRef.current) {
+            inputRef.current.style.height = 'auto'
+            inputRef.current.style.height = `${inputRef.current.scrollHeight}px`
+        }
+    }
+
+    useEffect(() => {
+        adjustTextareaHeight()
+    }, [input])
+
     const toast = useToastContext()
     const { t } = useI18n()
     const { copyWithToast } = useClipboard()
@@ -93,6 +105,12 @@ export default function ChatPage() {
         const newMessages = [...messages, userMessage]
         setMessages(newMessages)
         setInput('')
+
+        // Reset height
+        if (inputRef.current) {
+            inputRef.current.style.height = 'auto'
+        }
+
         setLoading(true)
 
         // Create placeholder for assistant message
