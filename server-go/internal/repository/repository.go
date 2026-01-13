@@ -233,9 +233,17 @@ func (r *Repository) GetPrompt(ctx context.Context, id int64) (*model.Prompt, er
 }
 
 func (r *Repository) UpdatePrompt(ctx context.Context, p *model.Prompt) error {
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+
+	tags := p.Tags
+	if tags == nil {
+		tags = []string{}
+	}
+
 	_, err := r.pool.Exec(ctx,
 		`UPDATE prompts SET title = $1, content = $2, tags = $3, updated_at = NOW() WHERE id = $4`,
-		p.Title, p.Content, p.Tags, p.ID)
+		p.Title, p.Content, tags, p.ID)
 	return err
 }
 
@@ -245,6 +253,8 @@ func (r *Repository) DeletePrompt(ctx context.Context, id int64) error {
 }
 
 func (r *Repository) IncrementPromptUseCount(ctx context.Context, id int64) error {
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
 	_, err := r.pool.Exec(ctx, `UPDATE prompts SET use_count = use_count + 1 WHERE id = $1`, id)
 	return err
 }
