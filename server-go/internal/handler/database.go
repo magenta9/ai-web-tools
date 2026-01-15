@@ -40,7 +40,7 @@ func (h *DBHandler) Connect(c *gin.Context) {
 	}
 	defer db.Close()
 
-	if err := db.Ping(); err != nil {
+	if err := db.PingContext(c.Request.Context()); err != nil {
 		c.JSON(500, gin.H{"success": false, "error": err.Error()})
 		return
 	}
@@ -71,7 +71,7 @@ func (h *DBHandler) GetDatabases(c *gin.Context) {
 		query = "SHOW DATABASES"
 	}
 
-	rows, err := db.Query(query)
+	rows, err := db.QueryContext(c.Request.Context(), query)
 	if err != nil {
 		c.JSON(500, gin.H{"success": false, "error": err.Error()})
 		return
@@ -126,9 +126,9 @@ func (h *DBHandler) GetSchema(c *gin.Context) {
 	}
 
 	if cfg.Type == "postgres" {
-		rows, err = db.Query(query)
+		rows, err = db.QueryContext(c.Request.Context(), query)
 	} else {
-		rows, err = db.Query(query, cfg.Database)
+		rows, err = db.QueryContext(c.Request.Context(), query, cfg.Database)
 	}
 
 	if err != nil {
@@ -211,7 +211,7 @@ func (h *DBHandler) Execute(c *gin.Context) {
 	}
 	defer db.Close()
 
-	rows, err := db.Query(req.SQL)
+	rows, err := db.QueryContext(c.Request.Context(), req.SQL)
 	if err != nil {
 		c.JSON(500, gin.H{"success": false, "error": err.Error()})
 		return
