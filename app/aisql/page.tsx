@@ -529,7 +529,7 @@ export default function AiSqlTool() {
                 <Table size={16} />
                 <span>Database Schema ({schema.tables.length} {t.aisql.tables})</span>
               </div>
-              <button className="panel-btn" onClick={(e) => e.stopPropagation()}>
+              <button className="panel-btn" onClick={(e) => { e.stopPropagation(); setSchemaExpanded(!schemaExpanded); }}>
                 {schemaExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
               </button>
             </div>
