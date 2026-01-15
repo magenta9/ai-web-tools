@@ -15,46 +15,46 @@ module.exports = {
       colors: {
         // Primary colors
         primary: {
-          DEFAULT: '#2563EB',
-          hover: '#1d4ed8',
-          light: '#dbeafe',
-          dark: '#60A5FA',
-          darkHover: '#93C5FD',
+          DEFAULT: '#5B9BF6',
+          hover: '#4A8AE5',
+          light: '#E8F0FD',
+          dark: '#7AB5FA',
+          darkHover: '#8BC5FB',
           darkLight: '#1E3A5F',
         },
         // Semantic colors
         background: {
-          light: '#FFFFFF',
-          dark: '#0F172A',
+          light: '#FAFBFC',
+          dark: '#1A1F2E',
         },
         surface: {
           light: '#FFFFFF',
-          dark: '#1E293B',
+          dark: '#242B3D',
           hover: {
-            light: '#F8FAFC',
-            dark: '#334155',
+            light: '#F5F6F8',
+            dark: '#2D3549',
           },
         },
         text: {
           primary: {
-            light: '#1E293B',
-            dark: '#F1F5F9',
+            light: '#334155',
+            dark: '#D1D5DB',
           },
           secondary: {
             light: '#64748B',
-            dark: '#94A3B8',
+            dark: '#9CA3AF',
           },
           muted: {
             light: '#94A3B8',
-            dark: '#64748B',
+            dark: '#6B7280',
           },
         },
         border: {
-          light: '#E2E8F0',
-          dark: '#334155',
+          light: '#E8EAED',
+          dark: '#374151',
           hover: {
-            light: '#CBD5E1',
-            dark: '#475569',
+            light: '#DCE0E5',
+            dark: '#4B5563',
           },
         },
         // Status colors
@@ -63,9 +63,9 @@ module.exports = {
         error: '#EF4444',
       },
       boxShadow: {
-        'sm': '0 1px 2px rgba(0, 0, 0, 0.04)',
-        'md': '0 4px 12px rgba(0, 0, 0, 0.08)',
-        'lg': '0 8px 24px rgba(0, 0, 0, 0.12)',
+        'sm': '0 1px 3px rgba(0, 0, 0, 0.06)',
+        'md': '0 4px 16px rgba(0, 0, 0, 0.10)',
+        'lg': '0 8px 32px rgba(0, 0, 0, 0.14)',
       },
       borderRadius: {
         'sm': '6px',
