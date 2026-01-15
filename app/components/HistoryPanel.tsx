@@ -32,17 +32,17 @@ const historyLabelStyle = {
   padding: '2px 8px',
   borderRadius: '4px',
   fontSize: '12px',
-  fontFamily: 'Orbitron, monospace',
-  background: 'rgba(0, 255, 255, 0.1)',
-  color: 'var(--accent-color)',
-  border: '1px solid var(--border-color)'
+  fontFamily: 'Fira Code, monospace',
+  background: 'var(--color-primary-light)',
+  color: 'var(--color-primary)',
+  border: '1px solid var(--color-border)'
 } as const
 
 const previewStyle = {
-  fontFamily: 'JetBrains Mono, monospace',
+  fontFamily: 'Fira Code, monospace',
   fontSize: '12px',
-  color: 'var(--text-primary)',
-  background: 'var(--bg-secondary)',
+  color: 'var(--color-text-primary)',
+  background: 'var(--color-surface-hover)',
   padding: '8px',
   borderRadius: '4px',
   maxHeight: '80px',
@@ -149,20 +149,20 @@ export function HistoryPanel<T extends BaseHistoryItem>({
                                         <span style={historyLabelStyle}>
                                             {renderItemLabel(item)}
                                         </span>
-                                        <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>
+                                        <span style={{ fontSize: '12px', color: 'var(--color-text-secondary)' }}>
                                             {formatTimestamp(item.timestamp)}
                                         </span>
                                     </div>
                                     <button
                                         onClick={() => handleDelete(index)}
                                         className="panel-btn"
-                                        style={{ color: 'var(--accent-color)', borderColor: 'var(--accent-color)' }}
+                                        style={{ color: 'var(--color-primary)', borderColor: 'var(--color-primary)' }}
                                     >
                                         <Trash size={14} />
                                     </button>
                                 </div>
                                 <div style={{ marginBottom: '10px' }}>
-                                    <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '5px' }}>输入:</div>
+                                    <div style={{ fontSize: '12px', color: 'var(--color-text-secondary)', marginBottom: '5px' }}>输入:</div>
                                     <div style={previewStyle}>
                                         {renderItemPreview(item)}
                                     </div>

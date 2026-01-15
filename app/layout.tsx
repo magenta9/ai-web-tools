@@ -1,12 +1,13 @@
 import type { Metadata } from 'next'
-import { Inter } from 'next/font/google'
+import { Inter, Fira_Code } from 'next/font/google'
 import './globals.css'
 import { ThemeProvider } from './providers/ThemeProvider'
 import { ToastProvider } from './providers/ToastProvider'
 import { I18nProvider } from './providers/I18nProvider'
 import { AuthProvider } from './context/AuthContext'
 
-const inter = Inter({ subsets: ['latin'] })
+const inter = Inter({ subsets: ['latin'], variable: '--font-inter' })
+const firaCode = Fira_Code({ subsets: ['latin'], variable: '--font-fira-code' })
 
 export const metadata: Metadata = {
   title: 'Web Tools - Developer Tools Suite',
@@ -20,7 +21,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="zh-CN" suppressHydrationWarning>
-      <body className={inter.className}>
+      <body className={`${inter.className} ${firaCode.className}`}>
         <ThemeProvider>
           <I18nProvider>
             <ToastProvider>
