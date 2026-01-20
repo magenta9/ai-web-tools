@@ -1,190 +1,61 @@
 'use client'
 
-import Link from 'next/link'
-import { usePathname } from 'next/navigation'
-import {
-  Code,
-  Image,
-  GitCompare,
-  Clock,
-  Key,
-  Sun,
-  Moon,
-  Database,
-  FileJson,
-  ChevronDown,
-  Sparkles,
-  Wrench,
-  Languages,
-  BookText,
-  MessageSquare
-} from 'lucide-react'
+import { Sun, Moon, Search, Menu } from 'lucide-react'
 import { useTheme } from '../providers/ThemeProvider'
 import { useAuth } from '../context/AuthContext'
-import { memo, useState, useRef } from 'react'
+import { memo } from 'react'
 
-const regularTools = [
-  { href: '/json', label: 'JSON Tool', Icon: Code },
-  { href: '/image', label: 'Image Converter', Icon: Image },
-  { href: '/diff', label: 'JSON Diff', Icon: GitCompare },
-  { href: '/timestamp', label: 'Timestamp Converter', Icon: Clock },
-  { href: '/jwt', label: 'JWT Tool', Icon: Key },
-]
+interface HeaderProps {
+  onMenuClick: () => void
+}
 
-const aiTools = [
-  { href: '/jsonfix', label: 'AI JSON Fix', Icon: FileJson },
-  { href: '/aisql', label: 'AI SQL', Icon: Database },
-  { href: '/translate', label: 'AI翻译', Icon: Languages },
-  { href: '/prompt', label: 'Prompt管理', Icon: BookText },
-  { href: '/chat', label: 'AI Chat', Icon: MessageSquare },
-]
-
-const Header = memo(function Header() {
-  const pathname = usePathname()
+const Header = memo(function Header({ onMenuClick }: HeaderProps) {
   const { isDarkMode, toggleTheme } = useTheme()
   const { user, logout } = useAuth()
-  const [regularDropdownOpen, setRegularDropdownOpen] = useState(false)
-  const [aiDropdownOpen, setAiDropdownOpen] = useState(false)
-  const closeTimerRef = useRef<Map<string, NodeJS.Timeout>>(new Map())
-
-  const clearCloseTimer = (key: string) => {
-    const timer = closeTimerRef.current.get(key)
-    if (timer) {
-      clearTimeout(timer)
-      closeTimerRef.current.delete(key)
-    }
-  }
-
-  const handleDropdownLeave = (key: string, setter: (val: boolean) => void) => {
-    const timer = setTimeout(() => {
-      setter(false)
-    }, 300)
-    closeTimerRef.current.set(key, timer)
-  }
-
-  const handleDropdownEnter = (key: string) => {
-    clearCloseTimer(key)
-  }
 
   return (
-    <header className="header">
-      <div className="container">
-        <div className="header-content">
-          <Link href="/" className="logo">
-            <div className="logo-icon">
-              <Code size={20} />
-            </div>
-            <div className="logo-text">
-              <h1 className="logo-title">Web Tools</h1>
-              <p className="logo-subtitle">Developer Utilities</p>
-            </div>
-          </Link>
+    <header className="sticky top-0 z-10 w-full border-b border-theme bg-surface/80 backdrop-blur-md">
+      <div className="flex h-14 items-center justify-between px-4 md:px-6">
+        {/* Left: Mobile Menu + Search */}
+        <div className="flex items-center gap-4 w-full max-w-md">
+          <button
+            className="md:hidden p-2 -ml-2 text-text-secondary hover:text-text-primary"
+            onClick={onMenuClick}
+            aria-label="Toggle menu"
+          >
+            <Menu size={20} />
+          </button>
 
-          <nav className="nav">
-            {/* Regular Tools Dropdown */}
-            <div
-              className="dropdown"
-              onMouseLeave={() => handleDropdownLeave('regular', setRegularDropdownOpen)}
-            >
-              <button
-                className="nav-link dropdown-toggle"
-                onMouseEnter={() => {
-                  handleDropdownEnter('regular')
-                  setRegularDropdownOpen(true)
-                }}
-                onClick={(e) => {
-                  e.preventDefault()
-                  setRegularDropdownOpen(!regularDropdownOpen)
-                }}
-              >
-                <Wrench size={16} />
-                普通工具
-                <ChevronDown size={14} className={`chevron ${regularDropdownOpen ? 'open' : ''}`} />
-              </button>
-              {regularDropdownOpen && (
-                <div
-                  className="dropdown-menu"
-                  onMouseEnter={() => handleDropdownEnter('regular')}
-                >
-                  {regularTools.map((item) => (
-                    <Link
-                      key={item.href}
-                      href={item.href}
-                      className={`dropdown-item ${pathname === item.href ? 'active' : ''}`}
-                      onClick={() => {
-                        clearCloseTimer('regular')
-                        setRegularDropdownOpen(false)
-                      }}
-                    >
-                      <item.Icon size={16} />
-                      {item.label}
-                    </Link>
-                  ))}
-                </div>
-              )}
-            </div>
+          <div className="relative w-full">
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-text-muted" />
+            <input
+              type="text"
+              placeholder="Search tools..."
+              className="h-9 w-full rounded-md border border-theme bg-surface-hover px-9 py-2 text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary placeholder:text-text-muted transition-all"
+            />
+          </div>
+        </div>
 
-            {/* AI Tools Dropdown */}
-            <div
-              className="dropdown"
-              onMouseLeave={() => handleDropdownLeave('ai', setAiDropdownOpen)}
-            >
-              <button
-                className="nav-link dropdown-toggle ai-dropdown"
-                onMouseEnter={() => {
-                  handleDropdownEnter('ai')
-                  setAiDropdownOpen(true)
-                }}
-                onClick={(e) => {
-                  e.preventDefault()
-                  setAiDropdownOpen(!aiDropdownOpen)
-                }}
-              >
-                <Sparkles size={16} />
-                AI工具
-                <ChevronDown size={14} className={`chevron ${aiDropdownOpen ? 'open' : ''}`} />
-              </button>
-              {aiDropdownOpen && (
-                <div
-                  className="dropdown-menu"
-                  onMouseEnter={() => handleDropdownEnter('ai')}
-                >
-                  {aiTools.map((item) => (
-                    <Link
-                      key={item.href}
-                      href={item.href}
-                      className={`dropdown-item ${pathname === item.href ? 'active' : ''}`}
-                      onClick={() => {
-                        clearCloseTimer('ai')
-                        setAiDropdownOpen(false)
-                      }}
-                    >
-                      <item.Icon size={16} />
-                      {item.label}
-                    </Link>
-                  ))}
-                </div>
-              )}
-            </div>
+        {/* Right: Actions */}
+        <div className="flex items-center gap-2">
+          <button
+            onClick={toggleTheme}
+            className="btn btn-ghost h-9 w-9 px-0"
+            title={isDarkMode ? 'Switch to light mode' : 'Switch to dark mode'}
+          >
+            {isDarkMode ? <Sun size={18} /> : <Moon size={18} />}
+          </button>
 
+          {user ? (
             <button
-              className="nav-link theme-toggle"
-              onClick={toggleTheme}
-              title={isDarkMode ? 'Switch to light mode' : 'Switch to dark mode'}
+              onClick={logout}
+              className="btn btn-ghost text-sm h-9"
             >
-              {isDarkMode ? <Sun size={16} /> : <Moon size={16} />}
+              Logout
             </button>
-
-            {user && (
-              <button
-                className="nav-link logout-button"
-                onClick={logout}
-                title="Logout"
-              >
-                Logout
-              </button>
-            )}
-          </nav>
+          ) : (
+             null
+          )}
         </div>
       </div>
     </header>

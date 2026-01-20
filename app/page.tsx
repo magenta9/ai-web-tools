@@ -1,5 +1,7 @@
+'use client'
+
 import Layout from './components/Layout'
-import Link from 'next/link'
+import ToolCard from './components/ToolCard'
 import {
   Code,
   Image,
@@ -11,7 +13,8 @@ import {
   Sparkles,
   Languages,
   MessageSquare,
-  BookText
+  BookText,
+  Wrench
 } from 'lucide-react'
 
 const regularTools = [
@@ -83,45 +86,38 @@ const aiTools = [
 export default function Home() {
   return (
     <Layout>
-      <div className="home">
-        <section className="hero">
-          <div className="hero-content">
-            <h1>Web Tools</h1>
-            <p>A collection of developer utilities to boost your productivity</p>
-          </div>
+      <div className="space-y-12">
+        {/* Hero / Intro */}
+        <section className="text-center py-8 md:py-12 max-w-2xl mx-auto">
+          <h1 className="text-3xl font-bold tracking-tight text-text-primary sm:text-4xl mb-4">
+            Developer Utilities
+          </h1>
+          <p className="text-lg text-text-secondary leading-relaxed">
+            A collection of free, accurate, and easy-to-use tools for developers.
+            Optimized for productivity with AI-powered features.
+          </p>
         </section>
 
-        <section className="tools-section">
-          <div className="section-header">
-            <h2>Tools</h2>
+        <section>
+          <div className="flex items-center gap-2 mb-6 border-b border-theme pb-4">
+            <Wrench className="text-primary" size={24} />
+            <h2 className="text-xl font-bold text-text-primary">Regular Tools</h2>
           </div>
-          <div className="tools-grid">
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {regularTools.map((tool) => (
-              <Link key={tool.href} href={tool.href} className="tool-card">
-                <div className="tool-icon">
-                  <tool.icon size={24} />
-                </div>
-                <h3>{tool.title}</h3>
-                <p>{tool.description}</p>
-              </Link>
+              <ToolCard key={tool.href} {...tool} />
             ))}
           </div>
         </section>
 
-        <section className="tools-section ai-section">
-          <div className="section-header ai-header">
-            <Sparkles size={20} />
-            <h2>AI Powered</h2>
+        <section>
+          <div className="flex items-center gap-2 mb-6 border-b border-theme pb-4">
+            <Sparkles className="text-primary" size={24} />
+            <h2 className="text-xl font-bold text-text-primary">AI Powered</h2>
           </div>
-          <div className="tools-grid">
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {aiTools.map((tool) => (
-              <Link key={tool.href} href={tool.href} className="tool-card ai-card">
-                <div className="tool-icon ai-icon">
-                  <tool.icon size={24} />
-                </div>
-                <h3>{tool.title}</h3>
-                <p>{tool.description}</p>
-              </Link>
+              <ToolCard key={tool.href} {...tool} />
             ))}
           </div>
         </section>
