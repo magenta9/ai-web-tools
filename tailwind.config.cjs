@@ -13,69 +13,31 @@ module.exports = {
         mono: ['Fira Code', 'SF Mono', 'Consolas', 'monospace'],
       },
       colors: {
-        // Primary colors
-        primary: {
-          DEFAULT: '#5B9BF6',
-          hover: '#4A8AE5',
-          light: '#E8F0FD',
-          dark: '#7AB5FA',
-          darkHover: '#8BC5FB',
-          darkLight: '#1E3A5F',
-        },
-        // Semantic colors
-        background: {
-          light: '#FAFBFC',
-          dark: '#1A1F2E',
-        },
+        background: 'var(--color-background)',
         surface: {
-          light: '#FFFFFF',
-          dark: '#242B3D',
-          hover: {
-            light: '#F5F6F8',
-            dark: '#2D3549',
-          },
+          DEFAULT: 'var(--color-surface)',
+          hover: 'var(--color-surface-hover)',
+        },
+        primary: {
+          DEFAULT: 'var(--color-primary)',
+          hover: 'var(--color-primary-hover)',
+          text: 'var(--color-primary-text)',
         },
         text: {
-          primary: {
-            light: '#334155',
-            dark: '#D1D5DB',
-          },
-          secondary: {
-            light: '#64748B',
-            dark: '#9CA3AF',
-          },
-          muted: {
-            light: '#94A3B8',
-            dark: '#6B7280',
-          },
+          primary: 'var(--color-text-primary)',
+          secondary: 'var(--color-text-secondary)',
+          muted: 'var(--color-text-muted)',
         },
         border: {
-          light: '#E8EAED',
-          dark: '#374151',
-          hover: {
-            light: '#DCE0E5',
-            dark: '#4B5563',
-          },
-        },
-        // Status colors
-        success: '#22C55E',
-        warning: '#F59E0B',
-        error: '#EF4444',
-      },
-      boxShadow: {
-        'sm': '0 1px 3px rgba(0, 0, 0, 0.06)',
-        'md': '0 4px 16px rgba(0, 0, 0, 0.10)',
-        'lg': '0 8px 32px rgba(0, 0, 0, 0.14)',
+          DEFAULT: 'var(--color-border)',
+          hover: 'var(--color-border-hover)',
+        }
       },
       borderRadius: {
-        'sm': '6px',
-        'md': '8px',
-        'lg': '12px',
-      },
-      transitionDuration: {
-        'fast': '150ms',
-        'normal': '200ms',
-      },
+        sm: 'var(--radius-sm)',
+        md: 'var(--radius-md)',
+        lg: 'var(--radius-lg)',
+      }
     },
   },
   plugins: [],
