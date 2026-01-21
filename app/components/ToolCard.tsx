@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { LucideIcon } from 'lucide-react'
+import { LucideIcon, ArrowRight } from 'lucide-react'
 
 interface ToolCardProps {
   href: string
@@ -15,17 +15,23 @@ export default function ToolCard({ href, title, description, icon: Icon, classNa
   return (
     <Link
       href={href}
-      className={`group flex flex-col p-6 bg-surface border border-theme rounded-lg hover:border-theme-hover hover:shadow-sm transition-all duration-200 ${className}`}
+      className={`group relative flex flex-col p-6 bg-surface border border-theme rounded-xl hover:border-primary/50 hover:shadow-md transition-all duration-300 ${className}`}
     >
-      <div className="flex items-center gap-3 mb-3">
-        <div className="p-2 rounded-md bg-surface-hover group-hover:bg-primary group-hover:text-primary-text transition-colors duration-200 text-text-primary">
-          <Icon size={20} />
+      <div className="flex items-start justify-between mb-4">
+        <div className="p-2.5 rounded-lg bg-surface-hover group-hover:bg-primary group-hover:text-primary-text transition-colors duration-300 text-text-primary shadow-sm border border-theme/50">
+          <Icon size={24} strokeWidth={1.5} />
         </div>
-        <h3 className="font-semibold text-lg text-text-primary group-hover:text-primary transition-colors duration-200">
-          {title}
-        </h3>
+        <ArrowRight
+          size={18}
+          className="text-text-muted opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300"
+        />
       </div>
-      <p className="text-sm text-text-secondary leading-relaxed">
+
+      <h3 className="font-semibold text-lg text-text-primary mb-2 tracking-tight">
+        {title}
+      </h3>
+
+      <p className="text-sm text-text-secondary leading-relaxed line-clamp-2">
         {description}
       </p>
     </Link>

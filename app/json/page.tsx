@@ -2,19 +2,15 @@
 
 import React, { useState, useEffect, useCallback } from 'react'
 import {
-  ArrowRight,
   Indent,
   Minimize2,
   Quote,
   Wand2,
   Copy,
   Clipboard,
-  ArrowLeftRight,
-  ArrowDownAZ,
   History,
   Trash2,
   Gauge,
-  Code,
   CircleCheck,
   AlertTriangle
 } from 'lucide-react'
@@ -24,19 +20,11 @@ import { useHistory, useClipboard, useLiveMode } from '../hooks'
 import { formatBytes } from '../utils'
 import { useToastContext } from '../providers/ToastProvider'
 import { useI18n } from '../providers/I18nProvider'
-import { DEBOUNCE_DELAY, STORAGE_KEYS } from '@/constants'
+import { STORAGE_KEYS } from '@/constants'
 import { getErrorMessage } from '@/types'
 import type { JsonValue, JsonObject, ValidationStatus } from '@/types'
-import '../tools.css'
 
-interface JsonHistoryItem {
-  type: string
-  input: string
-  output: string
-  timestamp: number
-  mode: string
-}
-
+// Helper for object key sorting
 function sortObjectKeys(obj: JsonValue): JsonValue {
   if (Array.isArray(obj)) {
     return obj.map(sortObjectKeys)
@@ -51,6 +39,14 @@ function sortObjectKeys(obj: JsonValue): JsonValue {
     return sorted
   }
   return obj
+}
+
+interface JsonHistoryItem {
+  type: string
+  input: string
+  output: string
+  timestamp: number
+  mode: string
 }
 
 export default function JsonTool() {
@@ -85,7 +81,7 @@ export default function JsonTool() {
     })
   }, [saveToHistory])
 
-  // Separate stats update without useCallback to avoid dependency cycles
+  // Stats
   useEffect(() => {
     setStats({
       input: input.length,
@@ -93,7 +89,7 @@ export default function JsonTool() {
     })
   }, [input, output])
 
-  // Validate JSON - only depends on input
+  // Validation
   useEffect(() => {
     const trimmed = input.trim()
     if (!trimmed) {
@@ -101,7 +97,6 @@ export default function JsonTool() {
       setError('')
       return
     }
-
     try {
       JSON.parse(trimmed)
       setValidationStatus('valid')
@@ -112,27 +107,19 @@ export default function JsonTool() {
     }
   }, [input])
 
-  // Live mode processing with debounce
+  // Live Mode
   const processLiveMode = useCallback(() => {
     try {
       const raw = input.trim()
       if (!raw) return
-
       let obj: JsonValue
       try {
         obj = JSON.parse(raw) as JsonValue
-      } catch (e) {
-        return
-      }
+      } catch { return }
 
-      if (sortKeys) {
-        obj = sortObjectKeys(obj)
-      }
-      const result = JSON.stringify(obj, null, indent)
-      setOutput(result)
-    } catch {
-      // Silent error handling in live mode
-    }
+      if (sortKeys) obj = sortObjectKeys(obj)
+      setOutput(JSON.stringify(obj, null, indent))
+    } catch {}
   }, [input, indent, sortKeys])
 
   useLiveMode(liveMode, input, processLiveMode)
@@ -146,15 +133,12 @@ export default function JsonTool() {
 
     try {
       let result = ''
-
       if (mode === 'escape') {
         result = JSON.stringify(raw)
       } else if (mode === 'unescape') {
         try {
           result = JSON.parse(raw)
-          if (typeof result !== 'string') {
-            result = JSON.stringify(result, null, indent)
-          }
+          if (typeof result !== 'string') result = JSON.stringify(result, null, indent)
         } catch {
           result = raw.replace(/\\"/g, '"').replace(/\\\\/g, '\\')
         }
@@ -167,71 +151,46 @@ export default function JsonTool() {
         }
 
         if (mode === 'format') {
-          if (sortKeys) {
-            obj = sortObjectKeys(obj)
-          }
+          if (sortKeys) obj = sortObjectKeys(obj)
           result = JSON.stringify(obj, null, indent)
         } else if (mode === 'minify') {
           result = JSON.stringify(obj)
         }
       }
-
       setOutput(result)
-      const operationMap: Record<string, string> = {
-        format: t.json.formatSuccess,
-        minify: t.json.minifySuccess,
-      }
       if (!silent) {
-        toast.success(operationMap[mode] || t.toast.operationSuccess)
+        toast.success(t.toast.operationSuccess)
         addToHistory(mode, raw, result)
       }
     } catch (err) {
       const errorMsg = getErrorMessage(err)
       setError(errorMsg)
-      if (!silent) {
-        toast.error(`${t.json.processingFailed}: ${errorMsg}`)
-      }
+      if (!silent) toast.error(errorMsg)
     }
   }, [input, indent, sortKeys, addToHistory, toast, t])
 
   const fixJSON = () => {
-    const raw = input.trim()
-    if (!raw) {
-      toast.warning(t.validation.required)
-      return
-    }
-
-    try {
-      // Try to fix common JSON issues
-      let fixed = raw
-
-      // Replace single quotes with double quotes
-      fixed = fixed.replace(/'/g, '"')
-
-      // Add quotes around unquoted property names
-      fixed = fixed.replace(/([{,]\s*)([a-zA-Z_$][a-zA-Z0-9_$]*)\s*:/g, '$1"$2":')
-
-      // Remove trailing commas
-      fixed = fixed.replace(/,(\s*[}\]])/g, '$1')
-
-      // Try to parse and re-stringify
-      const obj = JSON.parse(fixed)
-      const result = JSON.stringify(obj, null, indent)
-
-      setOutput(result)
-      setInput(fixed)
-      toast.success(t.json.fixSuccess)
-      addToHistory('fix', raw, result)
-    } catch {
-      toast.error(t.json.fixFailed)
-    }
+     const raw = input.trim()
+      if (!raw) {
+        toast.warning(t.validation.required)
+        return
+      }
+      try {
+        let fixed = raw.replace(/'/g, '"').replace(/([{,]\s*)([a-zA-Z_$][a-zA-Z0-9_$]*)\s*:/g, '$1"$2":').replace(/,(\s*[}\]])/g, '$1')
+        const obj = JSON.parse(fixed)
+        const result = JSON.stringify(obj, null, indent)
+        setOutput(result)
+        setInput(fixed)
+        toast.success(t.json.fixSuccess)
+        addToHistory('fix', raw, result)
+      } catch {
+        toast.error(t.json.fixFailed)
+      }
   }
 
   const handlePaste = async () => {
     const text = await pasteWithToast()
-    if (text) {
-      setInput(text)
-    }
+    if (text) setInput(text)
   }
 
   const clearAll = () => {
@@ -241,164 +200,167 @@ export default function JsonTool() {
     setValidationStatus('empty')
   }
 
-  const swapInOut = () => {
-    const temp = input
-    setInput(output)
-    setOutput(temp)
-  }
-
   const loadFromHistory = (item: JsonHistoryItem) => {
     setInput(item.input)
     setOutput(item.output)
     hideHistory()
   }
 
+  // UI Components matching Calquio Style
   return (
     <Layout>
-      <div className="json-tool">
-        <div className="json-container">
-          {/* Options Bar */}
-          <div className="options-bar">
-            <div className="option-group">
-              <label className="option-label">
-                <input
-                  type="checkbox"
-                  checked={sortKeys}
-                  onChange={(e) => setSortKeys(e.target.checked)}
+      <div className="max-w-6xl mx-auto space-y-6">
+
+        {/* Header */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-theme">
+          <div>
+            <h1 className="text-2xl font-bold text-text-primary tracking-tight">JSON Formatter & Validator</h1>
+            <p className="text-text-secondary mt-1">Format, validate, minify, and fix JSON data instantly.</p>
+          </div>
+          <div className="flex items-center gap-3">
+             <button
+              onClick={() => setLiveMode(!liveMode)}
+              className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${
+                liveMode
+                  ? 'bg-primary text-primary-text border-primary'
+                  : 'bg-surface text-text-secondary border-theme hover:bg-surface-hover'
+              }`}
+            >
+              <Gauge size={14} />
+              {liveMode ? 'Live Mode On' : 'Live Mode Off'}
+            </button>
+            <button onClick={showHistory} className="btn btn-secondary text-xs py-1.5">
+              <History size={14} className="mr-2"/> History
+            </button>
+          </div>
+        </div>
+
+        {/* Controls Card */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2 space-y-6">
+
+            {/* Input Section */}
+            <section className="bg-surface rounded-xl border border-theme shadow-sm overflow-hidden flex flex-col h-[500px]">
+              <div className="flex items-center justify-between px-4 py-3 border-b border-theme bg-zinc-50/50">
+                <div className="flex items-center gap-2">
+                    <span className="font-semibold text-sm text-text-primary">Input JSON</span>
+                    {validationStatus !== 'empty' && (
+                        <span className={`flex items-center gap-1 text-xs px-2 py-0.5 rounded-full ${
+                            validationStatus === 'valid' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+                        }`}>
+                        {validationStatus === 'valid' ? <CircleCheck size={12} /> : <AlertTriangle size={12} />}
+                        {validationStatus === 'valid' ? 'Valid' : 'Invalid'}
+                        </span>
+                    )}
+                </div>
+                <div className="flex gap-2">
+                    <button onClick={handlePaste} className="text-text-secondary hover:text-text-primary text-xs flex items-center gap-1 transition-colors">
+                        <Clipboard size={14}/> Paste
+                    </button>
+                    <button onClick={clearAll} className="text-text-secondary hover:text-red-600 text-xs flex items-center gap-1 transition-colors">
+                        <Trash2 size={14}/> Clear
+                    </button>
+                </div>
+              </div>
+
+              <div className="relative flex-1">
+                <textarea
+                    value={input}
+                    onChange={(e) => setInput(e.target.value)}
+                    className="w-full h-full p-4 font-mono text-sm bg-surface resize-none focus:outline-none border-none focus:ring-0"
+                    placeholder='Paste your JSON here...'
+                    spellCheck={false}
                 />
-                <ArrowDownAZ size={14} /> 排序键
-              </label>
-              <label className="option-label">
-                <input
-                  type="checkbox"
-                  checked={liveMode}
-                  onChange={(e) => setLiveMode(e.target.checked)}
-                />
-                <Gauge size={14} /> 实时模式
-              </label>
-            </div>
-            <div className="option-group">
-              <label className="option-label">
-                缩进:
-                <select
-                  value={indent}
-                  onChange={(e) => setIndent(Number(e.target.value))}
-                  className="indent-select"
-                >
-                  <option value={2}>2 空格</option>
-                  <option value={4}>4 空格</option>
-                  <option value={0}>Tab</option>
-                </select>
-              </label>
+                {error && (
+                    <div className="absolute bottom-4 left-4 right-4 bg-red-50 text-red-600 text-xs p-3 rounded-md border border-red-200 shadow-sm animate-in fade-in slide-in-from-bottom-2">
+                        {error}
+                    </div>
+                )}
+              </div>
+
+              <div className="px-4 py-2 bg-surface border-t border-theme flex justify-between text-xs text-text-muted">
+                 <span>{formatBytes(stats.input)}</span>
+                 <span>Ln {input.split('\n').length}</span>
+              </div>
+            </section>
+
+            {/* Action Bar (Mobile/Desktop) */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                 <button onClick={() => processJSON('format')} className="btn btn-primary w-full justify-center">
+                    <Indent size={16} className="mr-2" /> Format
+                 </button>
+                 <button onClick={() => processJSON('minify')} className="btn btn-secondary w-full justify-center">
+                    <Minimize2 size={16} className="mr-2" /> Minify
+                 </button>
+                 <button onClick={() => processJSON('escape')} className="btn btn-secondary w-full justify-center">
+                    <Quote size={16} className="mr-2" /> Escape
+                 </button>
+                 <button onClick={() => fixJSON()} className="btn btn-secondary w-full justify-center group">
+                    <Wand2 size={16} className="mr-2 group-hover:text-purple-500 transition-colors" /> AI Fix
+                 </button>
             </div>
           </div>
 
-          {/* Input/Output Panels */}
-          <div className="panels">
-            {/* Input Panel */}
-            <div className="panel">
-              <div className="panel-header">
-                <div className="panel-title">
-                  <ArrowRight size={14} /> INPUT
-                  {validationStatus !== 'empty' && (
-                    <span className={`validation-indicator ${validationStatus}`}>
-                      {validationStatus === 'valid' ? <CircleCheck size={12} /> : <AlertTriangle size={12} />}
-                      {validationStatus === 'valid' ? '有效' : '无效'}
-                    </span>
-                  )}
+          {/* Settings & Output Side (or Bottom on mobile) */}
+          <div className="space-y-6">
+             {/* Configuration Card */}
+             <div className="bg-surface rounded-xl border border-theme shadow-sm p-5">
+                <h3 className="font-semibold text-sm text-text-primary mb-4 flex items-center gap-2">
+                    Configuration
+                </h3>
+                <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                        <span className="text-sm text-text-secondary">Indentation</span>
+                        <select
+                            value={indent}
+                            onChange={(e) => setIndent(Number(e.target.value))}
+                            className="bg-surface-hover border-theme rounded px-2 py-1 text-xs focus:ring-0 w-24"
+                        >
+                            <option value={2}>2 Spaces</option>
+                            <option value={4}>4 Spaces</option>
+                            <option value={0}>Minified</option>
+                        </select>
+                    </div>
+                     <div className="flex items-center justify-between">
+                        <span className="text-sm text-text-secondary">Sort Keys</span>
+                        <input
+                            type="checkbox"
+                            checked={sortKeys}
+                            onChange={(e) => setSortKeys(e.target.checked)}
+                            className="rounded border-theme text-primary focus:ring-primary h-4 w-4"
+                        />
+                    </div>
                 </div>
-                <div className="panel-actions">
-                  <button className="panel-btn format-btn" onClick={() => processJSON('format')}>
-                    <Indent size={14} /> FORMAT
-                  </button>
-                  <button className="panel-btn minify-btn" onClick={() => processJSON('minify')}>
-                    <Minimize2 size={14} /> MINIFY
-                  </button>
-                  <button className="panel-btn escape-btn" onClick={() => processJSON('escape')}>
-                    <Quote size={14} /> ESCAPE
-                  </button>
-                  <button className="panel-btn unescape-btn" onClick={() => processJSON('unescape')}>
-                    <Quote size={14} /> UNESCAPE
-                  </button>
-                  <button className="panel-btn fix-btn" onClick={fixJSON}>
-                    <Wand2 size={14} /> FIX
-                  </button>
-                </div>
-              </div>
-              <div className="panel-content">
-                <textarea
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  className="code-textarea"
-                  placeholder='输入 JSON 数据，例如: {"name": "John", "age": 30}'
-                />
-                {error && <div className="error-message">{error}</div>}
-              </div>
-              <div className="panel-footer">
-                <div className="stats">
-                  <span>{formatBytes(stats.input)} bytes</span>
-                  <button className="panel-btn" onClick={showHistory}>
-                    <History size={14} /> 历史记录
-                  </button>
-                </div>
-                <div className="action-buttons">
-                  <button className="panel-btn" onClick={handlePaste}>
-                    <Clipboard size={14} /> 粘贴
-                  </button>
-                  <button className="panel-btn" onClick={clearAll}>
-                    <Trash2 size={14} /> 清空
-                  </button>
-                </div>
-              </div>
-            </div>
+             </div>
 
-            {/* Output Panel */}
-            <div className="panel">
-              <div className="panel-header">
-                <div className="panel-title">
-                  <Code size={14} /> OUTPUT
+             {/* Output Preview Card */}
+             <div className="bg-surface rounded-xl border border-theme shadow-sm overflow-hidden flex flex-col h-[350px]">
+                <div className="flex items-center justify-between px-4 py-3 border-b border-theme bg-zinc-50/50">
+                    <span className="font-semibold text-sm text-text-primary">Result</span>
+                    <button onClick={() => output && copyWithToast(output)} className="text-primary hover:text-primary-hover text-xs flex items-center gap-1 font-medium">
+                        <Copy size={14}/> Copy
+                    </button>
                 </div>
-                <div className="panel-actions">
-                  <button className="panel-btn" onClick={swapInOut}>
-                    <ArrowLeftRight size={14} /> 交换
-                  </button>
-                  <button className="panel-btn" onClick={() => output && copyWithToast(output)}>
-                    <Copy size={14} /> 复制
-                  </button>
-                </div>
-              </div>
-              <div className="panel-content">
                 <textarea
-                  value={output}
-                  readOnly
-                  className="code-textarea output-textarea"
-                  placeholder="处理后的 JSON 将显示在这里"
+                    value={output}
+                    readOnly
+                    className="flex-1 w-full p-4 font-mono text-sm bg-surface-hover/30 resize-none focus:outline-none border-none text-text-secondary"
+                    placeholder="Output will appear here..."
                 />
-              </div>
-              <div className="panel-footer">
-                <div className="stats">
-                  <span>{formatBytes(stats.output)} bytes</span>
-                </div>
-                <div className="action-buttons">
-                  <button className="panel-btn" onClick={() => output && copyWithToast(output)}>
-                    <Copy size={14} /> 复制
-                  </button>
-                </div>
-              </div>
-            </div>
+             </div>
           </div>
         </div>
 
         <HistoryPanel
           visible={historyVisible}
-          title="JSON 处理历史"
+          title="History"
           history={history}
           onClose={hideHistory}
           onClearAll={clearAllHistory}
           onDelete={deleteHistoryItem}
           onLoad={loadFromHistory}
-          renderItemLabel={(item) => (item.mode || item.type || '').toUpperCase()}
-          renderItemPreview={(item) => item.input.length > 200 ? item.input.substring(0, 200) + '...' : item.input}
+          renderItemLabel={(item: JsonHistoryItem) => (item.mode || item.type || '').toUpperCase()}
+          renderItemPreview={(item: JsonHistoryItem) => item.input.length > 50 ? item.input.substring(0, 50) + '...' : item.input}
         />
       </div>
     </Layout>
