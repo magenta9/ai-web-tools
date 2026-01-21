@@ -10,11 +10,9 @@ import {
   Key,
   Database,
   FileJson,
-  Sparkles,
   Languages,
   BookText,
   MessageSquare,
-  Wrench,
   LayoutDashboard,
   X
 } from 'lucide-react'
@@ -48,13 +46,13 @@ export default function Sidebar({ onCloseMobile }: SidebarProps) {
       <Link
         href={href}
         onClick={onCloseMobile}
-        className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+        className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-all duration-200 ${
           isActive
-            ? 'bg-primary text-primary-text'
-            : 'text-text-secondary hover:bg-surface-hover hover:text-text-primary'
+            ? 'bg-surface-hover text-text-primary font-semibold shadow-sm'
+            : 'text-text-secondary hover:bg-surface-hover hover:text-text-primary font-medium'
         }`}
       >
-        <Icon size={18} />
+        <Icon size={18} className={isActive ? 'text-primary' : 'text-text-muted group-hover:text-text-primary'} />
         {label}
       </Link>
     )
@@ -64,12 +62,12 @@ export default function Sidebar({ onCloseMobile }: SidebarProps) {
     <aside className="flex h-full w-full flex-col border-r border-theme bg-surface">
       {/* Brand */}
       <div className="flex h-14 items-center justify-between border-b border-theme px-6">
-        <div className="flex items-center gap-2">
-            <div className="flex items-center justify-center w-8 h-8 rounded bg-primary text-primary-text">
+        <Link href="/" className="flex items-center gap-2 group" onClick={onCloseMobile}>
+            <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-surface-hover text-primary group-hover:bg-primary group-hover:text-primary-text transition-colors duration-200">
                 <Code size={20} />
             </div>
-            <span className="font-bold text-lg tracking-tight">Web Tools</span>
-        </div>
+            <span className="font-bold text-lg tracking-tight text-text-primary">Web Tools</span>
+        </Link>
         {/* Close button for mobile */}
         <button
           onClick={onCloseMobile}
@@ -87,7 +85,7 @@ export default function Sidebar({ onCloseMobile }: SidebarProps) {
             </div>
 
             <div className="flex flex-col gap-2">
-                <h4 className="px-3 text-xs font-semibold uppercase tracking-wider text-text-muted">
+                <h4 className="px-3 text-xs font-semibold uppercase tracking-wider text-text-muted mb-1">
                 Regular Tools
                 </h4>
                 <div className="flex flex-col gap-1">
@@ -98,7 +96,7 @@ export default function Sidebar({ onCloseMobile }: SidebarProps) {
             </div>
 
             <div className="flex flex-col gap-2">
-                <h4 className="px-3 text-xs font-semibold uppercase tracking-wider text-text-muted">
+                <h4 className="px-3 text-xs font-semibold uppercase tracking-wider text-text-muted mb-1">
                 AI Powered
                 </h4>
                 <div className="flex flex-col gap-1">
@@ -111,7 +109,7 @@ export default function Sidebar({ onCloseMobile }: SidebarProps) {
       </div>
 
       {/* Footer / Meta */}
-      <div className="border-t border-theme p-4 text-xs text-text-muted text-center">
+      <div className="border-t border-theme p-4 text-xs text-text-muted text-center bg-surface-hover/30">
         © 2024 Web Tools
       </div>
     </aside>
