@@ -16,10 +16,12 @@ import {
   MessageSquare,
   Wrench,
   LayoutDashboard,
-  X
+  X,
+  Cloud
 } from 'lucide-react'
 
 const regularTools = [
+  { href: '/wordcloud', label: 'Word Cloud', Icon: Cloud },
   { href: '/json', label: 'JSON Tool', Icon: Code },
   { href: '/image', label: 'Image Converter', Icon: Image },
   { href: '/diff', label: 'JSON Diff', Icon: GitCompare },

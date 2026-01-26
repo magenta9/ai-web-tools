@@ -14,10 +14,17 @@ import {
   Languages,
   MessageSquare,
   BookText,
-  Wrench
+  Wrench,
+  Cloud
 } from 'lucide-react'
 
 const regularTools = [
+  {
+    href: '/wordcloud',
+    title: 'Word Cloud',
+    description: 'Generate interactive word clouds from text',
+    icon: Cloud
+  },
   {
     href: '/json',
     title: 'JSON Tool',
