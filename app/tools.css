@@ -5,7 +5,8 @@
 .timestamp-converter,
 .jwt-tool,
 .jsonfix-tool,
-.translate-tool {
+.translate-tool,
+.word-cloud-tool {
   flex: 1;
   display: flex;
   flex-direction: column;
