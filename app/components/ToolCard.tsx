@@ -15,17 +15,17 @@ export default function ToolCard({ href, title, description, icon: Icon, classNa
   return (
     <Link
       href={href}
-      className={`group flex flex-col p-6 bg-surface border border-theme rounded-lg hover:border-theme-hover hover:shadow-sm transition-all duration-200 ${className}`}
+      className={`group flex flex-col p-6 bg-surface border border-theme rounded-xl hover:border-primary/30 hover:shadow-md transition-all duration-200 ${className}`}
     >
       <div className="flex items-center gap-3 mb-3">
-        <div className="p-2 rounded-md bg-surface-hover group-hover:bg-primary group-hover:text-primary-text transition-colors duration-200 text-text-primary">
-          <Icon size={20} />
+        <div className="p-2.5 rounded-lg bg-primary/10 text-primary group-hover:bg-primary group-hover:text-primary-text transition-colors duration-200">
+          <Icon size={22} />
         </div>
         <h3 className="font-semibold text-lg text-text-primary group-hover:text-primary transition-colors duration-200">
           {title}
         </h3>
       </div>
-      <p className="text-sm text-text-secondary leading-relaxed">
+      <p className="text-sm text-text-secondary leading-relaxed line-clamp-2">
         {description}
       </p>
     </Link>

@@ -16,9 +16,15 @@ import {
   MessageSquare,
   Wrench,
   LayoutDashboard,
-  X,
-  Cloud
+  Home,
+  Cloud,
+  FileText,
+  Settings,
+  Users,
+  CreditCard,
+  PieChart
 } from 'lucide-react'
+import { useAuth } from '../context/AuthContext'
 
 const regularTools = [
   { href: '/wordcloud', label: 'Word Cloud', Icon: Cloud },
@@ -43,78 +49,88 @@ interface SidebarProps {
 
 export default function Sidebar({ onCloseMobile }: SidebarProps) {
   const pathname = usePathname()
+  const { user } = useAuth()
 
-  const NavItem = ({ href, label, Icon }: { href: string; label: string; Icon: any }) => {
-    const isActive = pathname === href
+  const NavItem = ({ href, label, Icon, isActive }: { href: string; label: string; Icon: any, isActive?: boolean }) => {
+    const active = isActive || pathname === href
     return (
       <Link
         href={href}
         onClick={onCloseMobile}
-        className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-          isActive
-            ? 'bg-primary text-primary-text'
+        className={`
+          flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors
+          ${active
+            ? 'bg-primary/10 text-primary'
             : 'text-text-secondary hover:bg-surface-hover hover:text-text-primary'
-        }`}
+          }
+        `}
       >
-        <Icon size={18} />
-        {label}
+        <Icon size={20} />
+        <span>{label}</span>
       </Link>
     )
   }
 
   return (
-    <aside className="flex h-full w-full flex-col border-r border-theme bg-surface">
-      {/* Brand */}
-      <div className="flex h-14 items-center justify-between border-b border-theme px-6">
-        <div className="flex items-center gap-2">
-            <div className="flex items-center justify-center w-8 h-8 rounded bg-primary text-primary-text">
-                <Code size={20} />
-            </div>
-            <span className="font-bold text-lg tracking-tight">Web Tools</span>
+    <aside className="h-full flex flex-col bg-surface border-r border-theme">
+      {/* Logo */}
+      <div className="h-16 flex items-center px-6 border-b border-theme/50">
+        <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center mr-3">
+          <span className="text-white font-bold text-lg">D</span>
         </div>
-        {/* Close button for mobile */}
-        <button
-          onClick={onCloseMobile}
-          className="md:hidden p-1 text-text-secondary hover:text-text-primary"
-        >
-          <X size={20} />
-        </button>
+        <span className="text-xl font-bold text-text-primary">DevDash</span>
       </div>
 
       {/* Navigation */}
-      <div className="flex-1 overflow-y-auto py-6 px-4">
-        <nav className="flex flex-col gap-8">
-            <div className="flex flex-col gap-1">
-                <NavItem href="/" label="Dashboard" Icon={LayoutDashboard} />
-            </div>
+      <nav className="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
+        <NavItem href="/" label="Overview" Icon={Home} />
+        <NavItem href="#" label="Projects" Icon={LayoutDashboard} />
+        <NavItem href="#" label="Team" Icon={Users} />
+        <NavItem href="#" label="Finance" Icon={CreditCard} />
+        <NavItem href="#" label="Reports" Icon={PieChart} />
 
-            <div className="flex flex-col gap-2">
-                <h4 className="px-3 text-xs font-semibold uppercase tracking-wider text-text-muted">
-                Regular Tools
-                </h4>
-                <div className="flex flex-col gap-1">
-                {regularTools.map((tool) => (
-                    <NavItem key={tool.href} {...tool} />
-                ))}
-                </div>
-            </div>
+        <div className="pt-6 pb-2">
+          <p className="px-4 text-xs font-semibold text-text-muted uppercase tracking-wider">
+            Regular Tools
+          </p>
+        </div>
+        {regularTools.map((tool) => (
+          <NavItem key={tool.href} {...tool} />
+        ))}
 
-            <div className="flex flex-col gap-2">
-                <h4 className="px-3 text-xs font-semibold uppercase tracking-wider text-text-muted">
-                AI Powered
-                </h4>
-                <div className="flex flex-col gap-1">
-                {aiTools.map((tool) => (
-                    <NavItem key={tool.href} {...tool} />
-                ))}
-                </div>
-            </div>
-        </nav>
-      </div>
+        <div className="pt-6 pb-2">
+          <p className="px-4 text-xs font-semibold text-text-muted uppercase tracking-wider">
+            AI Powered
+          </p>
+        </div>
+        {aiTools.map((tool) => (
+          <NavItem key={tool.href} {...tool} />
+        ))}
 
-      {/* Footer / Meta */}
-      <div className="border-t border-theme p-4 text-xs text-text-muted text-center">
-        © 2024 Web Tools
+        <div className="pt-6 pb-2">
+          <p className="px-4 text-xs font-semibold text-text-muted uppercase tracking-wider">
+            System
+          </p>
+        </div>
+        <NavItem href="#" label="Documents" Icon={FileText} />
+        <NavItem href="#" label="Settings" Icon={Settings} />
+      </nav>
+
+      {/* User Profile Snippet */}
+      <div className="p-4 border-t border-theme/50">
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold">
+            {user?.username ? user.username[0].toUpperCase() : 'G'}
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-medium text-text-primary truncate">
+              {user ? user.username : 'Guest User'}
+            </p>
+            <p className="text-xs text-text-muted truncate">
+              {user ? `${user.username.toLowerCase()}@devdash.com` : 'Sign in to access features'}
+            </p>
+          </div>
+        </div>
       </div>
     </aside>
   )
