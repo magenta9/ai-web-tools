@@ -36,7 +36,8 @@ export default function WordCloudCanvas({ text }: WordCloudCanvasProps) {
 
     const updateDimensions = () => {
         if (containerRef.current) {
-            const { width, height } = containerRef.current.getBoundingClientRect()
+            const width = containerRef.current.clientWidth
+            const height = containerRef.current.clientHeight
             setDimensions({ width, height })
         }
     }
