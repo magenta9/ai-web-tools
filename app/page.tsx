@@ -18,7 +18,6 @@ import {
   TrendingDown,
   LayoutDashboard,
   Users,
-  CreditCard,
   Zap
 } from 'lucide-react'
 
@@ -94,14 +93,25 @@ const aiTools = [
   }
 ]
 
-const colorStyles: Record<string, string> = {
+type StatColor = 'indigo' | 'emerald' | 'blue' | 'amber';
+
+const colorStyles: Record<StatColor, string> = {
   indigo: 'bg-indigo-50 text-indigo-600',
   emerald: 'bg-emerald-50 text-emerald-600',
   blue: 'bg-blue-50 text-blue-600',
   amber: 'bg-amber-50 text-amber-600',
 }
 
-const StatCard = ({ title, value, trend, trendUp, icon: Icon, color }: any) => (
+interface StatCardProps {
+  title: string;
+  value: string | number;
+  trend: string;
+  trendUp: boolean;
+  icon: React.ElementType;
+  color: StatColor;
+}
+
+const StatCard = ({ title, value, trend, trendUp, icon: Icon, color }: StatCardProps) => (
   <div className="bg-surface p-6 rounded-xl border border-theme shadow-sm hover:shadow-md transition-shadow">
     <div className="flex items-start justify-between">
       <div>
