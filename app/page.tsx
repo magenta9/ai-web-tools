@@ -175,7 +175,7 @@ export default function Home() {
           value={aiTools.length}
           trend="+1"
           trendUp={true}
-          icon={Database} // Using Database as proxy for AI/backend heavy
+          icon={Database}
           color="emerald"
         />
         <StatCard
