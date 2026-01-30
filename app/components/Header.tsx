@@ -1,6 +1,6 @@
 'use client'
 
-import { Sun, Moon, Search, Menu, Bell, Calendar, LogOut } from 'lucide-react'
+import { Sun, Moon, Search, Menu, Calendar, LogOut } from 'lucide-react'
 import { useTheme } from '../providers/ThemeProvider'
 import { useAuth } from '../context/AuthContext'
 import { memo, useState, useEffect, useRef } from 'react'
@@ -65,11 +65,6 @@ const Header = memo(function Header({ onMenuClick }: HeaderProps) {
             title={isDarkMode ? 'Switch to light mode' : 'Switch to dark mode'}
         >
             {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
-        </button>
-
-        <button className="p-2 text-text-secondary hover:bg-surface-hover rounded-full relative transition-colors">
-          <Bell size={20} />
-          <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-surface"></span>
         </button>
 
         <div className="h-8 w-px bg-border hidden sm:block"></div>

@@ -15,14 +15,10 @@ import {
   BookText,
   MessageSquare,
   Wrench,
-  LayoutDashboard,
   Home,
   Cloud,
   FileText,
-  Settings,
-  Users,
-  CreditCard,
-  PieChart
+  Settings
 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 
@@ -84,10 +80,6 @@ export default function Sidebar({ onCloseMobile }: SidebarProps) {
       {/* Navigation */}
       <nav className="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
         <NavItem href="/" label="Overview" Icon={Home} />
-        <NavItem href="#" label="Projects" Icon={LayoutDashboard} />
-        <NavItem href="#" label="Team" Icon={Users} />
-        <NavItem href="#" label="Finance" Icon={CreditCard} />
-        <NavItem href="#" label="Reports" Icon={PieChart} />
 
         <div className="pt-6 pb-2">
           <p className="px-4 text-xs font-semibold text-text-muted uppercase tracking-wider">
