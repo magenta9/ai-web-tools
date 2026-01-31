@@ -10,6 +10,7 @@ import {
   MessageSquare,
   BookText,
   Cloud,
+  Calculator,
   LucideIcon
 } from 'lucide-react'
 
@@ -56,6 +57,12 @@ export const regularTools: Tool[] = [
     title: 'JWT Tool',
     description: 'Encode and decode JWT tokens',
     icon: Key
+  },
+  {
+    href: '/compound',
+    title: '复利计算器',
+    description: '计算投资回报和复利增长',
+    icon: Calculator
   }
 ]
 
