@@ -3,41 +3,12 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
-  Code,
-  Image,
-  GitCompare,
-  Clock,
-  Key,
-  Database,
-  FileJson,
-  Sparkles,
-  Languages,
-  BookText,
-  MessageSquare,
-  Wrench,
   Home,
-  Cloud,
   FileText,
   Settings
 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
-
-const regularTools = [
-  { href: '/wordcloud', label: 'Word Cloud', Icon: Cloud },
-  { href: '/json', label: 'JSON Tool', Icon: Code },
-  { href: '/image', label: 'Image Converter', Icon: Image },
-  { href: '/diff', label: 'JSON Diff', Icon: GitCompare },
-  { href: '/timestamp', label: 'Timestamp Converter', Icon: Clock },
-  { href: '/jwt', label: 'JWT Tool', Icon: Key },
-]
-
-const aiTools = [
-  { href: '/jsonfix', label: 'AI JSON Fix', Icon: FileJson },
-  { href: '/aisql', label: 'AI SQL', Icon: Database },
-  { href: '/translate', label: 'AI Translate', Icon: Languages },
-  { href: '/prompt', label: 'Prompt Manager', Icon: BookText },
-  { href: '/chat', label: 'AI Chat', Icon: MessageSquare },
-]
+import { regularTools, aiTools } from '@/constants/tools'
 
 interface SidebarProps {
   onCloseMobile?: () => void
@@ -87,7 +58,7 @@ export default function Sidebar({ onCloseMobile }: SidebarProps) {
           </p>
         </div>
         {regularTools.map((tool) => (
-          <NavItem key={tool.href} {...tool} />
+          <NavItem key={tool.href} href={tool.href} label={tool.title} Icon={tool.icon} />
         ))}
 
         <div className="pt-6 pb-2">
@@ -96,7 +67,7 @@ export default function Sidebar({ onCloseMobile }: SidebarProps) {
           </p>
         </div>
         {aiTools.map((tool) => (
-          <NavItem key={tool.href} {...tool} />
+          <NavItem key={tool.href} href={tool.href} label={tool.title} Icon={tool.icon} />
         ))}
 
         <div className="pt-6 pb-2">
