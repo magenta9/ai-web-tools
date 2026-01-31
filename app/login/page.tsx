@@ -4,8 +4,11 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/app/context/AuthContext';
-import { Mail, Lock, Loader2, AlertCircle } from 'lucide-react';
+import { Mail, Lock, AlertCircle } from 'lucide-react';
 import Layout from '@/app/components/Layout';
+import { AuthCard } from '@/app/components/ui/AuthCard';
+import { Input } from '@/app/components/ui/Input';
+import { LoadingButton } from '@/app/components/LoadingButton';
 import '../auth.css';
 
 export default function LoginPage() {
@@ -33,75 +36,56 @@ export default function LoginPage() {
 
   return (
     <Layout>
-      <div className="auth-container">
-        <div className="auth-card">
-          <div className="auth-header">
-            <h1>Sign in to your account</h1>
-            <p>Enter your credentials to access your account</p>
+      <AuthCard
+        title="Sign in to your account"
+        subtitle="Enter your credentials to access your account"
+        footer={
+          <p>
+            Don&apos;t have an account?{' '}
+            <Link href="/register">Create one</Link>
+          </p>
+        }
+      >
+        {error && (
+          <div className="error-message">
+            <AlertCircle size={16} />
+            <span>{error}</span>
           </div>
+        )}
 
-          {error && (
-            <div className="error-message">
-              <AlertCircle size={16} />
-              <span>{error}</span>
-            </div>
-          )}
+        <form className="auth-form" onSubmit={handleSubmit}>
+          <Input
+            id="username"
+            label="Username"
+            type="text"
+            placeholder="Enter your username"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            required
+            icon={<Mail size={18} />}
+          />
 
-          <form className="auth-form" onSubmit={handleSubmit}>
-            <div className="form-group">
-              <label className="form-label" htmlFor="username">Username</label>
-              <div className="form-input-wrapper">
-                <div className="form-input-icon">
-                  <Mail size={18} />
-                </div>
-                <input
-                  id="username"
-                  type="text"
-                  className="form-input"
-                  placeholder="Enter your username"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  required
-                />
-              </div>
-            </div>
+          <Input
+            id="password"
+            label="Password"
+            type="password"
+            placeholder="Enter your password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+            icon={<Lock size={18} />}
+          />
 
-            <div className="form-group">
-              <label className="form-label" htmlFor="password">Password</label>
-              <div className="form-input-wrapper">
-                <div className="form-input-icon">
-                  <Lock size={18} />
-                </div>
-                <input
-                  id="password"
-                  type="password"
-                  className="form-input"
-                  placeholder="Enter your password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                />
-              </div>
-            </div>
-
-            <button
-              type="submit"
-              className="submit-btn"
-              disabled={loading}
-            >
-              {loading && <Loader2 size={16} className="spinner" />}
-              {loading ? 'Signing in...' : 'Sign in'}
-            </button>
-          </form>
-
-          <div className="auth-footer">
-            <p>
-              Don&apos;t have an account?{' '}
-              <Link href="/register">Create one</Link>
-            </p>
-          </div>
-        </div>
-      </div>
+          <LoadingButton
+            type="submit"
+            className="submit-btn"
+            isLoading={loading}
+            loadingText="Signing in..."
+          >
+            Sign in
+          </LoadingButton>
+        </form>
+      </AuthCard>
     </Layout>
   );
 }
