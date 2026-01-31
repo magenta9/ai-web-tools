@@ -308,16 +308,16 @@ export default function JsonTool() {
                   )}
                 </div>
                 <div className="panel-actions">
-                  <button className="panel-btn format-btn" onClick={() => processJSON('format')}>
+                  <button className="panel-btn" onClick={() => processJSON('format')}>
                     <Indent size={14} /> FORMAT
                   </button>
-                  <button className="panel-btn minify-btn" onClick={() => processJSON('minify')}>
+                  <button className="panel-btn" onClick={() => processJSON('minify')}>
                     <Minimize2 size={14} /> MINIFY
                   </button>
-                  <button className="panel-btn escape-btn" onClick={() => processJSON('escape')}>
+                  <button className="panel-btn" onClick={() => processJSON('escape')}>
                     <Quote size={14} /> ESCAPE
                   </button>
-                  <button className="panel-btn unescape-btn" onClick={() => processJSON('unescape')}>
+                  <button className="panel-btn" onClick={() => processJSON('unescape')}>
                     <Quote size={14} /> UNESCAPE
                   </button>
                   <button className="panel-btn fix-btn" onClick={fixJSON}>

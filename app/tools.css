@@ -220,37 +220,6 @@
 }
 
 /* Color variations for buttons */
-.format-btn {
-  background: var(--color-success);
-}
-
-.format-btn:hover {
-  background: #16a34a;
-}
-
-.minify-btn {
-  background: var(--color-warning);
-}
-
-.minify-btn:hover {
-  background: #d97706;
-}
-
-.escape-btn {
-  background: #8b5cf6;
-}
-
-.escape-btn:hover {
-  background: #7c3aed;
-}
-
-.unescape-btn {
-  background: var(--color-secondary);
-}
-
-.unescape-btn:hover {
-  background: var(--color-primary);
-}
 
 /* Image converter button */
 .convert-btn {
