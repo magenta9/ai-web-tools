@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect, useCallback, useRef } from 'react'
+import React, { useState, useCallback, useRef } from 'react'
 import {
   ArrowRight,
   Wand2,
@@ -16,15 +16,13 @@ import {
 import Layout from '../components/Layout'
 import { HistoryPanel } from '../components/HistoryPanel'
 import { Panel } from '../components/Panel'
-import { ModelSelector } from '../components/ModelSelector'
-import { LoadingButton } from '../components/LoadingButton'
 import { ActionButtons } from '../components/ActionButtons'
 import { useHistory, useOllamaModels, useClipboard, useLiveMode } from '../hooks'
 import { formatBytes } from '../utils'
 import { useToastContext } from '../providers/ToastProvider'
 import { useI18n } from '../providers/I18nProvider'
 import { useAuth } from '@/app/context/AuthContext'
-import { DEBOUNCE_DELAY, STORAGE_KEYS, API_BASE } from '@/constants'
+import { STORAGE_KEYS, API_BASE } from '@/constants'
 import '../tools.css'
 
 interface JsonFixHistoryItem {
@@ -440,12 +438,11 @@ Output (pure JSON only, nothing else):`,
           {/* Input/Output Panels */}
           <div className="panels">
             {/* Input Panel */}
-            <div className="panel">
-              <div className="panel-header">
-                <div className="panel-title">
-                  <ArrowRight size={14} /> INPUT
-                </div>
-                <div className="panel-actions">
+            <Panel
+              title="INPUT"
+              icon={<ArrowRight size={14} />}
+              actions={
+                <>
                   <button
                     className="panel-btn ai-btn"
                     onClick={fixJsonWithAI}
@@ -457,69 +454,64 @@ Output (pure JSON only, nothing else):`,
                   <button className="panel-btn" onClick={() => fixJson('retry')}>
                     <RefreshCcw size={14} /> 重试
                   </button>
-                </div>
-              </div>
-              <div className="panel-content">
-                <textarea
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  className="code-textarea"
-                  placeholder='输入 protobuf 风格或非标准 JSON 数据，例如: {key:value key2:"value2"}'
-                />
-                {error && <div className="error-message">{error}</div>}
-              </div>
-              <div className="panel-footer">
-                <div className="stats">
-                  <span>{formatBytes(input.length)} bytes</span>
-                  <button className="panel-btn" onClick={showHistory}>
-                    <History size={14} /> 历史记录
-                  </button>
-                </div>
-                <div className="action-buttons">
-                  <button className="panel-btn" onClick={handlePaste}>
-                    <Clipboard size={14} /> 粘贴
-                  </button>
-                  <button className="panel-btn" onClick={clearAll}>
-                    <Trash2 size={14} /> 清空
-                  </button>
-                </div>
-              </div>
-            </div>
+                </>
+              }
+              footer={
+                <>
+                  <div className="stats">
+                    <span>{formatBytes(input.length)} bytes</span>
+                    <button className="panel-btn" onClick={showHistory}>
+                      <History size={14} /> 历史记录
+                    </button>
+                  </div>
+                  <ActionButtons
+                    onPaste={handlePaste}
+                    onClear={clearAll}
+                  />
+                </>
+              }
+            >
+              <textarea
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                className="code-textarea"
+                placeholder='输入 protobuf 风格或非标准 JSON 数据，例如: {key:value key2:"value2"}'
+              />
+              {error && <div className="error-message">{error}</div>}
+            </Panel>
 
             {/* Output Panel */}
-            <div className="panel">
-              <div className="panel-header">
-                <div className="panel-title">
-                  <Code size={14} /> OUTPUT
-                </div>
-                <div className="panel-actions">
+            <Panel
+              title="OUTPUT"
+              icon={<Code size={14} />}
+              actions={
+                <>
                   <button className="panel-btn" onClick={swapInOut}>
                     <RefreshCcw size={14} /> 交换
                   </button>
                   <button className="panel-btn" onClick={() => output && copyWithToast(output)}>
                     <Copy size={14} /> 复制
                   </button>
-                </div>
-              </div>
-              <div className="panel-content">
-                <textarea
-                  value={output}
-                  readOnly
-                  className="code-textarea output-textarea"
-                  placeholder="修复后的标准 JSON 将显示在这里"
-                />
-              </div>
-              <div className="panel-footer">
-                <div className="stats">
-                  <span>{formatBytes(output?.length || 0)} bytes</span>
-                </div>
-                <div className="action-buttons">
-                  <button className="panel-btn" onClick={() => output && copyWithToast(output)}>
-                    <Copy size={14} /> 复制
-                  </button>
-                </div>
-              </div>
-            </div>
+                </>
+              }
+              footer={
+                <>
+                  <div className="stats">
+                    <span>{formatBytes(output?.length || 0)} bytes</span>
+                  </div>
+                  <ActionButtons
+                    onCopy={() => output && copyWithToast(output)}
+                  />
+                </>
+              }
+            >
+              <textarea
+                value={output}
+                readOnly
+                className="code-textarea output-textarea"
+                placeholder="修复后的标准 JSON 将显示在这里"
+              />
+            </Panel>
           </div>
         </div>
 
